@@ -1,0 +1,283 @@
+import { COOKIE_NAME } from "@shared/const";
+import { getSessionCookieOptions } from "./_core/cookies";
+import { systemRouter } from "./_core/systemRouter";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import {
+  getLatestWeatherRecords,
+  getLogisticsRecords,
+  getEnergyRecords,
+  saveWeatherRecord,
+  saveLogisticsRecord,
+  saveEnergyRecord,
+  logApiCall,
+} from "./db";
+import { getWeatherData, getLogisticsData, getEnergyData } from "./services/dataService";
+import { z } from "zod";
+
+export const appRouter = router({
+  system: systemRouter,
+  auth: router({
+    me: publicProcedure.query(opts => opts.ctx.user),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return {
+        success: true,
+      } as const;
+    }),
+  }),
+
+  // 날씨 API 라우터
+  weather: router({
+    latest: protectedProcedure.query(async ({ ctx }) => {
+      return await getLatestWeatherRecords(ctx.user.id, 10);
+    }),
+    fetch: protectedProcedure
+      .input(z.object({ location: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        try {
+          const data = await getWeatherData(input.location);
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "weather",
+            endpoint: "/api/weather/fetch",
+            method: "GET",
+            statusCode: 200,
+            responseTime: Date.now() - startTime,
+            success: 1,
+          });
+          return data;
+        } catch (error) {
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "weather",
+            endpoint: "/api/weather/fetch",
+            method: "GET",
+            statusCode: 500,
+            responseTime: Date.now() - startTime,
+            success: 0,
+            errorMessage: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      }),
+    save: protectedProcedure
+      .input(
+        z.object({
+          location: z.string(),
+          temperature: z.number(),
+          humidity: z.number(),
+          windSpeed: z.number(),
+          condition: z.string(),
+          description: z.string().optional(),
+          feelsLike: z.number().optional(),
+          uvIndex: z.number().optional(),
+          visibility: z.number().optional(),
+          pressure: z.number().optional(),
+          precipitation: z.number().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        try {
+          await saveWeatherRecord({
+            userId: ctx.user.id,
+            ...input,
+          });
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "weather",
+            endpoint: "/api/weather/save",
+            method: "POST",
+            statusCode: 200,
+            responseTime: Date.now() - startTime,
+            success: 1,
+          });
+          return { success: true };
+        } catch (error) {
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "weather",
+            endpoint: "/api/weather/save",
+            method: "POST",
+            statusCode: 500,
+            responseTime: Date.now() - startTime,
+            success: 0,
+            errorMessage: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      }),
+  }),
+
+  // 물류 API 라우터
+  logistics: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await getLogisticsRecords(ctx.user.id, 10);
+    }),
+    fetch: protectedProcedure
+      .input(z.object({ trackingNumber: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        try {
+          const data = await getLogisticsData(input.trackingNumber);
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "logistics",
+            endpoint: "/api/logistics/fetch",
+            method: "GET",
+            statusCode: 200,
+            responseTime: Date.now() - startTime,
+            success: 1,
+          });
+          return data;
+        } catch (error) {
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "logistics",
+            endpoint: "/api/logistics/fetch",
+            method: "GET",
+            statusCode: 500,
+            responseTime: Date.now() - startTime,
+            success: 0,
+            errorMessage: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      }),
+    save: protectedProcedure
+      .input(
+        z.object({
+          trackingNumber: z.string(),
+          status: z.string(),
+          origin: z.string(),
+          destination: z.string(),
+          carrier: z.string().optional(),
+          estimatedDelivery: z.date().optional(),
+          actualDelivery: z.date().optional(),
+          weight: z.number().optional(),
+          distance: z.number().optional(),
+          cost: z.number().optional(),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        try {
+          await saveLogisticsRecord({
+            userId: ctx.user.id,
+            ...input,
+          });
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "logistics",
+            endpoint: "/api/logistics/save",
+            method: "POST",
+            statusCode: 200,
+            responseTime: Date.now() - startTime,
+            success: 1,
+          });
+          return { success: true };
+        } catch (error) {
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "logistics",
+            endpoint: "/api/logistics/save",
+            method: "POST",
+            statusCode: 500,
+            responseTime: Date.now() - startTime,
+            success: 0,
+            errorMessage: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      }),
+  }),
+
+  // 에너지 API 라우터
+  energy: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await getEnergyRecords(ctx.user.id, 10);
+    }),
+    fetch: protectedProcedure
+      .input(z.object({ facility: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        try {
+          const data = await getEnergyData(input.facility);
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "energy",
+            endpoint: "/api/energy/fetch",
+            method: "GET",
+            statusCode: 200,
+            responseTime: Date.now() - startTime,
+            success: 1,
+          });
+          return data;
+        } catch (error) {
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "energy",
+            endpoint: "/api/energy/fetch",
+            method: "GET",
+            statusCode: 500,
+            responseTime: Date.now() - startTime,
+            success: 0,
+            errorMessage: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      }),
+    save: protectedProcedure
+      .input(
+        z.object({
+          facility: z.string(),
+          energyType: z.string(),
+          consumption: z.number(),
+          cost: z.number(),
+          efficiency: z.number().optional(),
+          carbonEmission: z.number().optional(),
+          peakUsage: z.number().optional(),
+          averageUsage: z.number().optional(),
+          trend: z.string().optional(),
+          notes: z.string().optional(),
+          recordDate: z.date(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const startTime = Date.now();
+        try {
+          await saveEnergyRecord({
+            userId: ctx.user.id,
+            ...input,
+          });
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "energy",
+            endpoint: "/api/energy/save",
+            method: "POST",
+            statusCode: 200,
+            responseTime: Date.now() - startTime,
+            success: 1,
+          });
+          return { success: true };
+        } catch (error) {
+          await logApiCall({
+            userId: ctx.user.id,
+            apiName: "energy",
+            endpoint: "/api/energy/save",
+            method: "POST",
+            statusCode: 500,
+            responseTime: Date.now() - startTime,
+            success: 0,
+            errorMessage: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      }),
+  }),
+});
+
+export type AppRouter = typeof appRouter;

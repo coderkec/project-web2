@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integrated-dashboard
+  labels:
+    app: integrated-dashboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: integrated-dashboard
+  template:
+    metadata:
+      labels:
+        app: integrated-dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: 10.2.2.40:5000/library/integrated-dashboard:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          value: "mysql://root:admin123@10.2.3.254:3306/integrated_dashboard" # From diagram: DB Access VIP
+        - name: JWT_SECRET
+          value: "integrated-dashboard-secret-8877"
+        - name: VITE_APP_ID
+          value: "YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER"
+        - name: GOOGLE_CLIENT_SECRET
+          value: "YOUR_GOOGLE_CLIENT_SECRET_PLACEHOLDER"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integrated-dashboard-service
+spec:
+  selector:
+    app: integrated-dashboard
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP

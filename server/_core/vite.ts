@@ -3,8 +3,7 @@ import fs from "fs";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
 import path from "path";
-import { createServer as createViteServer } from "vite";
-import viteConfig from "../../vite.config";
+// Static imports of 'vite' removed to prevent production resolution errors
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -12,6 +11,9 @@ export async function setupVite(app: Express, server: Server) {
     hmr: { server },
     allowedHosts: true as const,
   };
+
+  const { createServer: createViteServer } = await import("vite");
+  const { default: viteConfig } = await import("../../vite.config");
 
   const vite = await createViteServer({
     ...viteConfig,

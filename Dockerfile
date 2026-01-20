@@ -37,6 +37,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/patches ./patches
 
 # 프로덕션 의존성만 설치
 RUN pnpm install --prod --frozen-lockfile

@@ -44,12 +44,13 @@ async function startServer() {
   );
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
-    // 경로를 문자열 변수로 넘겨서 빌드 도구의 추적을 피합니다.
-    const viteModulePath = "./vite";
-    const { setupVite } = await import(viteModulePath);
+    // Using a dynamic path to prevent esbuild from bundling 'vite.ts' and its dev-only dependencies
+    const devModule = ["./", "vite"].join("");
+    const { setupVite } = await import(devModule);
     await setupVite(app, server);
   } else {
-    const { serveStatic } = await import("./vite");
+    // static.ts is safe to bundle as it has no dev dependencies
+    const { serveStatic } = await import("./static");
     serveStatic(app);
   }
   const preferredPort = parseInt(process.env.PORT || "3000");

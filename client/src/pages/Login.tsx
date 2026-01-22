@@ -13,7 +13,7 @@ export default function Login() {
   const handleLogin = () => {
     if (id === "admin" && pw === "admin123") {
       login();
-      window.location.href = "/";
+      setLocation("/");
     } else {
       setError("아이디 또는 비밀번호가 틀렸습니다.");
     }

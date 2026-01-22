@@ -87,6 +87,7 @@ export function useAuth(options?: UseAuthOptions) {
 
     // 2. 서버 인증 없고, 수동 로그인(admin/admin123) 되어있으면 DEV_USER로 우회
     if (!user && !meQuery.isLoading && localStorage.getItem("isLoggedIn") === "true") {
+      console.log("[useAuth] Forcefully falling back to DEV_USER");
       user = DEV_USER;
     }
 

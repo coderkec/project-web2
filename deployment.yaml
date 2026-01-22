@@ -28,9 +28,9 @@ spec:
         - name: JWT_SECRET
           value: "integrated-dashboard-secret-8877"
         - name: VITE_APP_ID
-          value: "YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER"
+          value: "YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER" # 서버에서 배포 시 실제 값으로 변경하세요
         - name: GOOGLE_CLIENT_SECRET
-          value: "YOUR_GOOGLE_CLIENT_SECRET_PLACEHOLDER"
+          value: "GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxxxxxx" # !!! [중요] 여기에 실제 구글 클라이언트 시크릿을 입력해주세요 !!!
         resources:
           limits:
             cpu: "1"

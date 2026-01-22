@@ -18,8 +18,8 @@ export default function Home() {
 
     if (token) {
       console.log('[Home] Received OAuth token from URL, storing as cookie');
-      // Store token as cookie
-      document.cookie = `manus-runtime-session=${token}; path=/; max-age=31536000; SameSite=Lax`;
+      // Store token as cookie with correct name
+      document.cookie = `app_session_id=${token}; path=/; max-age=31536000; SameSite=Lax`;
       // Remove token from URL
       window.history.replaceState({}, '', '/');
       // Force reload to pick up the new cookie

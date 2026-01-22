@@ -39,10 +39,16 @@ export function getSessionCookieOptions(
   //       ? hostname
   //       : undefined;
 
+  // Force relax security for WAF/HTTP specific environment
+  // If the user's browser is on HTTP, we cannot use Secure: true.
+  console.log("[Cookies] Generating cookie options. Protocol:", req.protocol);
+  const isHttps = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https";
+  console.log("[Cookies] isHttps detected:", isHttps);
+
   return {
     httpOnly: true,
     path: "/",
-    sameSite: isSecureRequest(req) ? "none" : "lax",
-    secure: isSecureRequest(req),
+    sameSite: "lax",
+    secure: false, // Forcing false to solve the login loop issue on HTTP/WAF
   };
 }

@@ -17,6 +17,10 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
+    if (window.location.search.includes("oauth=success")) {
+      console.warn("[RequireAuth] OAuth success param detected, but user is null. Cookie might be missing.");
+      // Optional: You could show an error message instead of immediate redirect to help debugging
+    }
     return <Redirect to="/login" />;
   }
 

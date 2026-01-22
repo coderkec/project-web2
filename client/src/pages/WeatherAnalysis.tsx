@@ -49,6 +49,8 @@ export default function WeatherAnalysis() {
     { label: "기압", value: "1013 hPa", icon: Gauge, color: "text-primary/60" },
     { label: "자외선", value: "5", icon: Sun, color: "text-primary/60" },
     { label: "강수량", value: "0 mm", icon: CloudRain, color: "text-primary/60" },
+    { label: "미세먼지", value: "85 (나쁨)", icon: Wind, color: "text-red-400" },
+    { label: "초미세먼지", value: "34 (나쁨)", icon: Wind, color: "text-orange-400" },
   ];
 
   return (
@@ -67,6 +69,27 @@ export default function WeatherAnalysis() {
             <p className="text-muted-foreground text-sm">서울, 대한민국</p>
           </div>
         </div>
+      </div>
+
+      {/* 미세먼지 경고 배너 */}
+      <div className="px-6 pt-6">
+        <Card className="blueprint-card p-4 bg-gradient-to-r from-red-900/40 to-background border-l-4 border-l-red-500">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="bg-red-500/20 p-2 rounded-full">
+                <Wind className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-red-200">미세먼지 나쁨 주의</h3>
+                <p className="text-sm text-muted-foreground">오늘은 마스크 착용이 권장됩니다.</p>
+              </div>
+            </div>
+            <div className="text-right hidden md:block">
+              <div className="text-2xl font-bold text-red-400">85 µg/m³</div>
+              <div className="text-xs text-muted-foreground">PM10 (현재)</div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* 콘텐츠 */}

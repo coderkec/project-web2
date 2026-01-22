@@ -1,13 +1,25 @@
-import { Home, CloudSun, Zap, Settings, LogOut } from "lucide-react";
+import { Home, CloudSun, Zap, Settings, LogOut, Moon, Sun } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export function Sidebar() {
     const [location] = useLocation();
     const { logout } = useAuth();
+    const { theme, setTheme } = useTheme();
 
     const menuItems = [
-        { icon: <Home className="w-5 h-5" />, label: "홈 대시보드", path: "/home" },
+        { icon: <Home className="w-5 h-5" />, label: "홈 대시보드", path: "/" },
         { icon: <CloudSun className="w-5 h-5" />, label: "날씨 모니터링", path: "/analysis/weather" },
         { icon: <Zap className="w-5 h-5" />, label: "에너지 관리", path: "/analysis/energy" },
     ];
@@ -45,10 +57,36 @@ export function Sidebar() {
 
             {/* 하단 설정 및 로그아웃 */}
             <div className="p-4 border-t border-primary/20 space-y-2">
-                <button className="flex items-center gap-3 px-4 py-3 w-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-all">
-                    <Settings className="w-5 h-5" />
-                    설정
-                </button>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <button className="flex items-center gap-3 px-4 py-3 w-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-all">
+                            <Settings className="w-5 h-5" />
+                            설정
+                        </button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>환경 설정</DialogTitle>
+                            <DialogDescription>
+                                대시보드의 환경을 설정할 수 있습니다.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="flex items-center justify-between space-x-2">
+                                <div className="flex flex-col space-y-1">
+                                    <Label htmlFor="theme-mode">다크 모드</Label>
+                                    <span className="text-xs text-muted-foreground">어두운 테마를 사용하여 눈의 피로를 줄입니다.</span>
+                                </div>
+                                <Switch
+                                    id="theme-mode"
+                                    checked={theme === "dark"}
+                                    onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                                />
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
                 <button
                     onClick={() => logout()}
                     className="flex items-center gap-3 px-4 py-3 w-full text-sm font-medium text-red-400/70 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-all"

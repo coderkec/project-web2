@@ -67,7 +67,7 @@ export function WeatherCard({ data, isLoading }: WeatherCardProps) {
       : "어제와 비슷해요";
 
   return (
-    <Card className="blueprint-card p-6 hover:border-primary/50 transition-colors cursor-pointer group">
+    <Card className="blueprint-card p-6 hover:border-primary/50 transition-colors cursor-pointer group h-full">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h3 className="tech-text text-xl font-bold mb-1">오늘의 날씨</h3>

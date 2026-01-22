@@ -39,7 +39,7 @@ export default function Home() {
       color: "success" as const,
     },
     {
-      label: "오늘 에너지 사용량",
+      label: "전국 일일 전력 사용",
       value: "450",
       unit: "kWh",
       trend: "down" as const,
@@ -48,10 +48,11 @@ export default function Home() {
       color: "warning" as const,
     },
     {
-      label: "이번 달 예상 요금",
-      value: "125,000",
-      unit: "원",
-      trend: "stable" as const,
+      label: "전력 피크 시간",
+      value: "14:00 - 15:00",
+      unit: "",
+      trend: "up" as const,
+      trendValue: 0,
       icon: <Calendar className="w-5 h-5" />,
       color: "accent" as const,
     },
@@ -109,27 +110,27 @@ export default function Home() {
             {/* 메인 대시보드 그리드 */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* 날씨 카드 */}
-              <div className="space-y-4">
+              <div className="space-y-4 h-full flex flex-col">
                 <div className="flex items-center justify-between">
                   <h3 className="tech-text text-lg">날씨 모니터링</h3>
                   <button onClick={() => setLocation("/analysis/weather")} className="text-xs text-primary hover:underline">
                     상세보기 &rarr;
                   </button>
                 </div>
-                <div onClick={() => setLocation("/analysis/weather")} className="cursor-pointer hover:opacity-95 transition-all">
+                <div onClick={() => setLocation("/analysis/weather")} className="cursor-pointer hover:opacity-95 transition-all flex-1">
                   <WeatherCard />
                 </div>
               </div>
 
               {/* 에너지 카드 */}
-              <div className="space-y-4">
+              <div className="space-y-4 h-full flex flex-col">
                 <div className="flex items-center justify-between">
                   <h3 className="tech-text text-lg">에너지 관리</h3>
                   <button onClick={() => setLocation("/analysis/energy")} className="text-xs text-primary hover:underline">
                     상세보기 &rarr;
                   </button>
                 </div>
-                <div onClick={() => setLocation("/analysis/energy")} className="cursor-pointer hover:opacity-95 transition-all">
+                <div onClick={() => setLocation("/analysis/energy")} className="cursor-pointer hover:opacity-95 transition-all flex-1">
                   <EnergyCard />
                 </div>
               </div>

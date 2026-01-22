@@ -50,7 +50,33 @@ export interface EnergyData {
  * 날씨 데이터 조회 (샘플 데이터)
  * 실제 환경: OpenWeatherMap, WeatherAPI 등의 외부 API 호출
  */
+import { fetchWeatherFromKMA } from "./apiClient";
+
+/**
+ * 날씨 데이터 조회 (샘플 데이터 + 실제 API)
+ * 실제 환경: KMA API (기상청) 호출 -> 실패 시 샘플 데이터 반환
+ */
 export async function getWeatherData(location: string): Promise<WeatherData> {
+  // 1. 기상청 API 호출 시도
+  const realData = await fetchWeatherFromKMA(location);
+
+  if (realData) {
+    return {
+      location: realData.location,
+      temperature: realData.temperature,
+      humidity: realData.humidity,
+      windSpeed: realData.windSpeed,
+      condition: realData.condition,
+      description: realData.condition, // 간단하게 condition 사용
+      feelsLike: realData.temperature, // 체감온도는 별도 계산 필요하지만 일단 기온으로 대체
+      uvIndex: 0, // 초단기실황에는 없음
+      visibility: 10000,
+      pressure: 1013,
+      precipitation: realData.precipitation,
+    };
+  }
+
+  // 2. 실패 시 Mock 데이터 반환 (Fallback)
   const sampleWeatherData: Record<string, WeatherData> = {
     "서울": {
       location: "서울, 대한민국",
@@ -118,11 +144,35 @@ export async function getLogisticsData(trackingNumber: string): Promise<Logistic
   return sampleLogisticsData[trackingNumber] || sampleLogisticsData["CJ123456789"];
 }
 
+import { fetchRealtimeEnergy } from "./apiClient";
+
 /**
- * 에너지 데이터 조회 (샘플 데이터)
- * 실제 환경: 한국전력, 가스공사, 수도공사 등의 API 호출
+ * 에너지 데이터 조회
+ * 실제 환경: Worker Node(API) 호출 -> 실패 시 샘플 데이터 반환 (Hybrid)
  */
 export async function getEnergyData(facility: string): Promise<EnergyData> {
+  // 1. 외부 API 호출 시도
+  const realData = await fetchRealtimeEnergy(facility);
+
+  if (realData) {
+    // API 응답 구조를 EnergyData 인터페이스에 맞게 변환해야 함 (매핑 로직)
+    // 여기서는 API가 우리 DB 구조와 비슷하게 준다고 가정하거나, 필요한 필드만 매핑
+    return {
+      facility: realData.facility || facility,
+      energyType: realData.energyType || "전기",
+      consumption: realData.consumption ?? 0,
+      cost: realData.cost ?? 0,
+      efficiency: realData.efficiency,
+      carbonEmission: realData.carbonEmission,
+      peakUsage: realData.peakUsage,
+      averageUsage: realData.averageUsage,
+      trend: realData.trend,
+      notes: realData.notes,
+      recordDate: new Date(realData.recordDate || Date.now()),
+    };
+  }
+
+  // 2. 실패(또는 아직 연동 전) 시 기존 샘플 데이터 반환 (Fallback)
   const sampleEnergyData: Record<string, EnergyData> = {
     "본사빌딩": {
       facility: "본사 빌딩",

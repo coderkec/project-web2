@@ -278,6 +278,26 @@ export const appRouter = router({
         }
       }),
   }),
+
+  // [New] 글로벌/공통 서비스 라우터 (아이디어 구현용)
+  global: router({
+    trends: protectedProcedure.query(async () => {
+      // 실제로는 apiClient.fetchGlobalEnergyTrends() 호출
+      // 지금은 Mock 데이터 반환
+      return {
+        oilPrice: 78.5,     // WTI 기준
+        exchangeRate: 1340, // 원/달러
+        trend: "stable"
+      };
+    }),
+    notices: protectedProcedure.query(async () => {
+      // apiClient.fetchCompanyNotices() 호출
+      return [
+        { id: 1, title: "⚡ 에너지 절약 캠페인 안내", urgent: true },
+        { id: 2, title: "시스템 정기 점검 (1/25)", urgent: false }
+      ];
+    })
+  }),
 });
 
 export type AppRouter = typeof appRouter;

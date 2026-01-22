@@ -60,11 +60,11 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
   };
 
   return (
-    <Card className="blueprint-card p-6 hover:border-primary/50 transition-colors cursor-pointer group">
+    <Card className="blueprint-card p-6 hover:border-primary/50 transition-colors cursor-pointer group h-full">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h3 className="tech-text text-xl font-bold mb-1">{displayData.facility}</h3>
-          <p className="text-sm text-primary/80 font-mono">실시간 에너지 모니터링</p>
+          <h3 className="tech-text text-xl font-bold mb-1">전국 전력 현황</h3>
+          <p className="text-sm text-primary/80 font-mono">일별 전력 사용 패턴 요약</p>
         </div>
         <div className="p-3 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
           <Zap className="w-8 h-8 text-yellow-400" />
@@ -73,17 +73,17 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
 
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="bg-primary/5 p-4 rounded border border-primary/10">
-          <p className="text-sm text-muted-foreground mb-1">실시간 전력 사용량</p>
+          <p className="text-sm text-muted-foreground mb-1">전일 대비 사용 변화</p>
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold tech-text">{displayData.consumption}</span>
-            <span className="text-sm text-muted-foreground">kW</span>
+            <span className="text-3xl font-bold tech-text text-green-500">-5</span>
+            <span className="text-sm text-muted-foreground">%</span>
           </div>
         </div>
         <div className="bg-primary/5 p-4 rounded border border-primary/10">
-          <p className="text-sm text-muted-foreground mb-1">예상 청구 금액</p>
+          <p className="text-sm text-muted-foreground mb-1">주간 평균 대비 부하</p>
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold tech-text">{displayData.cost.toLocaleString()}</span>
-            <span className="text-sm text-muted-foreground">원</span>
+            <span className="text-3xl font-bold tech-text text-red-400">+12</span>
+            <span className="text-sm text-muted-foreground">%</span>
           </div>
         </div>
       </div>

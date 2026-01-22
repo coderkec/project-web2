@@ -43,86 +43,118 @@
 }
 
 :root {
-  /* 건축 청사진 미학: 로얄 블루 기반 */
-  --primary: oklch(0.55 0.25 260); /* 밝은 블루 */
-  --primary-foreground: oklch(0.141 0.005 285.823); /* 어두운 배경 */
-  --sidebar-primary: oklch(0.50 0.22 260);
-  --sidebar-primary-foreground: oklch(0.95 0.01 65);
-  --chart-1: oklch(0.55 0.25 260);
-  --chart-2: oklch(0.60 0.28 260);
-  --chart-3: oklch(0.50 0.20 260);
-  --chart-4: oklch(0.45 0.18 260);
-  --chart-5: oklch(0.40 0.15 260);
-  --radius: 0rem; /* 직사각형 프레임 */
-  /* 깊은 로얄 블루 배경 */
-  --background: oklch(0.10 0.02 260);
-  --foreground: oklch(1 0 0); /* 흰색 */
-  --card: oklch(0.15 0.02 260);
-  --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.15 0.02 260);
-  --popover-foreground: oklch(1 0 0);
-  --secondary: oklch(0.55 0.25 260);
-  --secondary-foreground: oklch(0.141 0.005 285.823);
-  --muted: oklch(0.35 0.08 260);
-  --muted-foreground: oklch(0.85 0.01 65);
-  --accent: oklch(0.75 0.22 50); /* 골드 악센트 */
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.25 0.05 260);
-  --input: oklch(0.15 0.02 260);
-  --ring: oklch(0.55 0.25 260);
-  --sidebar: oklch(0.15 0.02 260);
-  --sidebar-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.55 0.25 260);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.25 0.05 260);
-  --sidebar-ring: oklch(0.55 0.25 260);
+  /* Pretty & Bright Theme (Default) */
+  --primary: oklch(0.60 0.18 250);
+  /* Vivid Blue */
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.95 0.05 250);
+  --secondary-foreground: oklch(0.30 0.10 250);
+
+  --accent: oklch(0.70 0.20 50);
+  /* Warm Orange/Gold */
+  --accent-foreground: oklch(1 0 0);
+
+  --background: oklch(0.98 0.01 240);
+  /* Very light cool gray/white */
+  --foreground: oklch(0.20 0.05 240);
+  /* Dark cool gray */
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.20 0.05 240);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.20 0.05 240);
+
+  --muted: oklch(0.96 0.01 240);
+  --muted-foreground: oklch(0.55 0.05 240);
+
+  --destructive: oklch(0.6 0.2 20);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.92 0.02 240);
+  --input: oklch(0.92 0.02 240);
+  --ring: oklch(0.60 0.18 250);
+
+  --radius: 0.75rem;
+  /* Modern rounded corners */
+
+  /* Sidebar - Slightly darker/colored for dimension */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.40 0.05 240);
+  --sidebar-primary: oklch(0.60 0.18 250);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.96 0.02 250);
+  --sidebar-accent-foreground: oklch(0.60 0.18 250);
+  --sidebar-border: oklch(0.94 0.02 240);
+  --sidebar-ring: oklch(0.60 0.18 250);
+
+  /* Chart Colors for Light Theme */
+  --chart-1: oklch(0.60 0.18 250);
+  --chart-2: oklch(0.55 0.20 180);
+  --chart-3: oklch(0.70 0.20 50);
+  --chart-4: oklch(0.60 0.20 300);
+  --chart-5: oklch(0.60 0.15 30);
 }
 
 .dark {
-  /* 건축 청사진 미학: 로얄 블루 기반 (다크 모드) */
+  /* Deep Blue/Dark Theme (Option) */
   --primary: oklch(0.55 0.25 260);
   --primary-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.50 0.22 260);
-  --sidebar-primary-foreground: oklch(0.95 0.01 65);
+
   --background: oklch(0.10 0.02 260);
-  --foreground: oklch(1 0 0);
+  --foreground: oklch(0.95 0.01 240);
+
   --card: oklch(0.15 0.02 260);
-  --card-foreground: oklch(1 0 0);
+  --card-foreground: oklch(0.95 0.01 240);
+
   --popover: oklch(0.15 0.02 260);
-  --popover-foreground: oklch(1 0 0);
-  --secondary: oklch(0.55 0.25 260);
-  --secondary-foreground: oklch(0.141 0.005 285.823);
-  --muted: oklch(0.35 0.08 260);
-  --muted-foreground: oklch(0.85 0.01 65);
+  --popover-foreground: oklch(0.95 0.01 240);
+
+  --secondary: oklch(0.25 0.05 260);
+  --secondary-foreground: oklch(0.95 0.01 240);
+
+  --muted: oklch(0.20 0.05 260);
+  --muted-foreground: oklch(0.70 0.05 260);
+
   --accent: oklch(0.75 0.22 50);
   --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
+
+  --destructive: oklch(0.6 0.2 20);
+  --destructive-foreground: oklch(0.95 0 0);
+
   --border: oklch(0.25 0.05 260);
-  --input: oklch(0.15 0.02 260);
+  --input: oklch(0.25 0.05 260);
   --ring: oklch(0.55 0.25 260);
+
+  --radius: 0.75rem;
+
+  --sidebar: oklch(0.12 0.02 260);
+  --sidebar-foreground: oklch(0.85 0.02 240);
+  --sidebar-primary: oklch(0.55 0.25 260);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.25 0.05 260);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.25 0.05 260);
+  --sidebar-ring: oklch(0.55 0.25 260);
+
+  /* Chart Colors for Dark Theme */
   --chart-1: oklch(0.55 0.25 260);
   --chart-2: oklch(0.60 0.28 260);
   --chart-3: oklch(0.50 0.20 260);
   --chart-4: oklch(0.45 0.18 260);
   --chart-5: oklch(0.40 0.15 260);
-  --sidebar: oklch(0.15 0.02 260);
-  --sidebar-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.55 0.25 260);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.25 0.05 260);
-  --sidebar-ring: oklch(0.55 0.25 260);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -137,6 +169,7 @@
 }
 
 @layer components {
+
   /**
    * Custom container utility that centers content and adds responsive padding.
    *
@@ -154,7 +187,8 @@
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
+    /* 16px - mobile padding */
     padding-right: 1rem;
   }
 
@@ -165,16 +199,19 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
+      /* 24px - tablet padding */
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
+      /* 32px - desktop padding */
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
+      /* Standard content width */
     }
   }
 }
@@ -184,6 +221,7 @@
    ============================================ */
 
 @layer components {
+
   /* 기술 선 드로잉 스타일 */
   .blueprint-border {
     @apply border border-primary/30;
@@ -200,7 +238,7 @@
     position: relative;
     border: 2px solid rgba(70, 150, 255, 0.4);
     background-color: rgba(21, 53, 90, 0.5);
-    background-image: 
+    background-image:
       linear-gradient(135deg, transparent 24%, rgba(70, 150, 255, 0.05) 25%, rgba(70, 150, 255, 0.05) 26%, transparent 27%),
       linear-gradient(45deg, transparent 24%, rgba(70, 150, 255, 0.05) 25%, rgba(70, 150, 255, 0.05) 26%, transparent 27%);
     background-size: 30px 30px;
@@ -245,67 +283,23 @@
     box-shadow: 0 0 25px rgba(70, 150, 255, 0.4);
   }
 
-  /* 카드 컴포넌트 */
+  /* Modern Pretty Card Style */
   .blueprint-card {
-    position: relative;
-    border: 2px solid rgba(70, 150, 255, 0.4);
-    background-color: rgba(21, 53, 90, 0.5);
-    background-image: 
-      linear-gradient(135deg, transparent 24%, rgba(70, 150, 255, 0.05) 25%, rgba(70, 150, 255, 0.05) 26%, transparent 27%),
-      linear-gradient(45deg, transparent 24%, rgba(70, 150, 255, 0.05) 25%, rgba(70, 150, 255, 0.05) 26%, transparent 27%);
-    background-size: 30px 30px;
-    background-position: 0 0, 15px 15px;
-    backdrop-filter: blur(4px);
-    padding: 1.5rem;
-    border-radius: 0;
+    @apply bg-card rounded-xl border border-border shadow-sm transition-all duration-300;
   }
 
-  /* 섹션 구분선 */
-  .blueprint-divider {
-    @apply h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent;
+  .blueprint-card:hover {
+    @apply shadow-md border-primary/50 translate-y-[-2px];
   }
 
-  /* 데이터 표시 영역 */
-  .data-display {
-    @apply bg-card/30 border border-primary/20 rounded-none p-4 font-mono text-sm;
-  }
-
-  /* 그래프/차트 영역 */
-  .chart-container {
-    position: relative;
-    border: 2px solid rgba(70, 150, 255, 0.4);
-    background-color: rgba(21, 53, 90, 0.5);
-    background-image: 
-      linear-gradient(135deg, transparent 24%, rgba(70, 150, 255, 0.05) 25%, rgba(70, 150, 255, 0.05) 26%, transparent 27%),
-      linear-gradient(45deg, transparent 24%, rgba(70, 150, 255, 0.05) 25%, rgba(70, 150, 255, 0.05) 26%, transparent 27%);
-    background-size: 30px 30px;
-    background-position: 0 0, 15px 15px;
-    backdrop-filter: blur(4px);
-    padding: 1.5rem;
-    border-radius: 0;
-  }
-
-  /* 정보 박스 */
-  .info-box {
-    @apply bg-primary/5 border-l-4 border-primary/60 pl-4 py-3 rounded-none;
-  }
-
-  .info-box.accent {
-    @apply bg-accent/5 border-l-4 border-accent/60;
-  }
-
-  /* 기술 텍스트 효과 */
+  /* 기술 텍스트: 깔끔하고 모던하게 */
   .tech-text {
-    @apply text-white font-bold tracking-wider;
-    text-shadow: 0 0 10px rgba(70, 150, 255, 0.5), 0 0 20px rgba(70, 150, 255, 0.3);
+    @apply font-bold tracking-tight text-foreground;
   }
 
-  /* 블루프린트 배경 패턴 */
-  .blueprint-pattern {
-    background-image: 
-      linear-gradient(rgba(70, 150, 255, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(70, 150, 255, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
+  /* 사이드바 스타일 개선 */
+  .sidebar-gradient {
+    background: linear-gradient(180deg, var(--sidebar) 0%, oklch(from var(--sidebar) l c h / 0.95) 100%);
   }
 
   /* 반응형 그리드 */
@@ -327,6 +321,7 @@
 }
 
 @layer utilities {
+
   /* 텍스트 그로우 효과 */
   .glow-text {
     @apply text-white;

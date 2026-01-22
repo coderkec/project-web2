@@ -51,8 +51,8 @@ export function registerOAuthRoutes(app: Express) {
 
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      console.log("[OAuth] Session created, redirecting to home");
-      res.redirect(302, "/?oauth=success");
+      console.log("[OAuth] Session created, redirecting with token");
+      res.redirect(302, `/?token=${encodeURIComponent(sessionToken)}`);
     } catch (error: any) {
       console.error("[OAuth] Callback failed details:", {
         message: error.message,

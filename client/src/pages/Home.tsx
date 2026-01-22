@@ -11,6 +11,22 @@ export default function Home() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 
+  // Handle OAuth token from URL parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    if (token) {
+      console.log('[Home] Received OAuth token from URL, storing as cookie');
+      // Store token as cookie
+      document.cookie = `manus-runtime-session=${token}; path=/; max-age=31536000; SameSite=Lax`;
+      // Remove token from URL
+      window.history.replaceState({}, '', '/');
+      // Force reload to pick up the new cookie
+      window.location.reload();
+    }
+  }, []);
+
   const today = new Date();
   const dateString = today.toLocaleDateString("ko-KR", {
     year: "numeric",

@@ -198,40 +198,7 @@ export default function EnergyAnalysis() {
           </div>
         </Card>
 
-        {/* 요약 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="blueprint-card p-4">
-            <p className="text-xs text-muted-foreground">총 전력 사용량</p>
-            <p className="tech-text text-xl font-bold">
-              {energyData.summary.totalUsage} kWh
-            </p>
-            <Zap className="w-5 h-5 text-yellow-400/60 mt-2" />
-          </Card>
 
-          <Card className="blueprint-card p-4">
-            <p className="text-xs text-muted-foreground">평균 일일 사용</p>
-            <p className="tech-text text-xl font-bold">
-              {energyData.summary.avgDailyUsage} kWh
-            </p>
-            <Clock className="w-5 h-5 text-blue-400/60 mt-2" />
-          </Card>
-
-          <Card className="blueprint-card p-4">
-            <p className="text-xs text-muted-foreground">피크 시간</p>
-            <p className="tech-text text-xl font-bold">
-              {energyData.summary.peakHour}:00
-            </p>
-            <Clock className="w-5 h-5 text-purple-400/60 mt-2" />
-          </Card>
-
-          <Card className="blueprint-card p-4">
-            <p className="text-xs text-muted-foreground">전월 대비</p>
-            <p className="tech-text text-xl font-bold text-green-400">
-              {energyData.summary.momChange}%
-            </p>
-            <TrendingDown className="w-5 h-5 text-green-400/60 mt-2" />
-          </Card>
-        </div>
 
         {/* 시간별(일일) 전력 사용량 */}
         <div>
@@ -280,6 +247,9 @@ export default function EnergyAnalysis() {
                   height={60}
                   angle={0}
                   textAnchor="middle"
+                  interval={0}
+                  tickLine={{ stroke: "#ffffff40" }}
+                  axisLine={{ stroke: "#ffffff40" }}
                 />
                 <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 12 }} />
                 <Tooltip
@@ -291,6 +261,41 @@ export default function EnergyAnalysis() {
                 <Bar dataKey="gas" fill="#f59e0b" name="가스 (MJ)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </Card>
+        </div>
+
+        {/* 요약 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="blueprint-card p-4">
+            <p className="text-xs text-muted-foreground">총 전력 사용량</p>
+            <p className="tech-text text-xl font-bold">
+              {energyData.summary.totalUsage} kWh
+            </p>
+            <Zap className="w-5 h-5 text-yellow-400/60 mt-2" />
+          </Card>
+
+          <Card className="blueprint-card p-4">
+            <p className="text-xs text-muted-foreground">평균 일일 사용</p>
+            <p className="tech-text text-xl font-bold">
+              {energyData.summary.avgDailyUsage} kWh
+            </p>
+            <Clock className="w-5 h-5 text-blue-400/60 mt-2" />
+          </Card>
+
+          <Card className="blueprint-card p-4">
+            <p className="text-xs text-muted-foreground">피크 시간</p>
+            <p className="tech-text text-xl font-bold">
+              {energyData.summary.peakHour}:00
+            </p>
+            <Clock className="w-5 h-5 text-purple-400/60 mt-2" />
+          </Card>
+
+          <Card className="blueprint-card p-4">
+            <p className="text-xs text-muted-foreground">전월 대비</p>
+            <p className="tech-text text-xl font-bold text-green-400">
+              {energyData.summary.momChange}%
+            </p>
+            <TrendingDown className="w-5 h-5 text-green-400/60 mt-2" />
           </Card>
         </div>
       </div>

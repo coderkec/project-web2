@@ -11,6 +11,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -233,49 +234,58 @@ export default function EnergyAnalysis() {
         </div>
 
         {/* 시간별(일일) 전력 사용량 */}
-<div>
-  <h2 className="tech-text text-lg mb-4">
-    시간대별 전력 사용량
-  </h2>
-  <Card className="blueprint-card p-6">
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={dailyUsageData}>
-        <defs>
-          <linearGradient id="dailyUsage" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-        <XAxis dataKey="time" stroke="#ffffff60" />
-        <YAxis stroke="#ffffff60" />
-        <Tooltip />
-        <Area
-          type="monotone"
-          dataKey="usage"
-          stroke="#3b82f6"
-          fill="url(#dailyUsage)"
-          name="전력 사용량 (kWh)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  </Card>
-</div>
+        <div>
+          <h2 className="tech-text text-lg mb-4">
+            시간대별 전력 사용량
+          </h2>
+          <Card className="blueprint-card p-6">
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={dailyUsageData}>
+                <defs>
+                  <linearGradient id="dailyUsage" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                <XAxis dataKey="time" stroke="#ffffff60" />
+                <YAxis stroke="#ffffff60" />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="usage"
+                  stroke="#3b82f6"
+                  fill="url(#dailyUsage)"
+                  name="전력 사용량 (kWh)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
 
 
         {/* 월별 전력 / 가스 */}
-        <Card className="blueprint-card p-6">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={monthlyEnergyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-              <XAxis dataKey="month" stroke="#ffffff60" />
-              <YAxis stroke="#ffffff60" />
-              <Tooltip />
-              <Bar dataKey="electric" fill="#3b82f6" name="전력 (kWh)" />
-              <Bar dataKey="gas" fill="#f59e0b" name="가스" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        <div>
+          <h2 className="tech-text text-lg mb-4">
+            월별 전력 및 가스 사용량 추이
+          </h2>
+          <Card className="blueprint-card p-6">
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={monthlyEnergyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                <XAxis dataKey="month" stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 12 }} />
+                <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#1e1e24", borderColor: "#ffffff20", borderRadius: "8px" }}
+                  itemStyle={{ color: "#fff" }}
+                />
+                <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                <Bar dataKey="electric" fill="#3b82f6" name="전력 (kWh)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="gas" fill="#f59e0b" name="가스 (MJ)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
       </div>
     </div>
   );

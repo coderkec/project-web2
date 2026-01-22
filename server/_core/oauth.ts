@@ -47,6 +47,8 @@ export function registerOAuthRoutes(app: Express) {
       });
 
       const cookieOptions = getSessionCookieOptions(req);
+      console.log("[OAuth] Setting Session Cookie with Options:", JSON.stringify(cookieOptions, null, 2));
+
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       console.log("[OAuth] Session created, redirecting to home");

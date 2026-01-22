@@ -309,14 +309,32 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
+    // Extensive Debugging for OAuth Cookie Issues
+    console.log(`[Auth] Authenticating request: ${req.method} ${req.url}`);
+
+    const cookieHeader = req.headers.cookie;
+    console.log("[Auth] Raw Cookie Header:", cookieHeader ? "PRESENT" : "MISSING");
+    if (cookieHeader) {
+      console.log("[Auth] Cookie Header Content:", cookieHeader);
+    }
+
     // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
+
+    console.log(`[Auth] Parsed '${COOKIE_NAME}':`, sessionCookie ? "FOUND" : "NOT_FOUND");
+    if (sessionCookie) {
+      console.log(`[Auth] Session Cookie Value (first 10 chars): ${sessionCookie.substring(0, 10)}...`);
+    }
+
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {
+      console.warn("[Auth] Session verification failed. Cookie was invalid or missing.");
       throw ForbiddenError("Invalid session cookie");
     }
+
+    console.log("[Auth] Session Verified. User OpenID:", session.openId);
 
     const sessionUserId = session.openId;
     const signedInAt = new Date();

@@ -273,7 +273,14 @@ export default function EnergyAnalysis() {
             <ResponsiveContainer width="100%" height={320}>
               <BarChart data={monthlyEnergyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="month" stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 12 }} />
+                <XAxis
+                  dataKey="month"
+                  stroke="#ffffff60"
+                  tick={{ fill: "#ffffff", fontSize: 13, fontWeight: 500 }}
+                  height={60}
+                  angle={0}
+                  textAnchor="middle"
+                />
                 <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#1e1e24", borderColor: "#ffffff20", borderRadius: "8px" }}

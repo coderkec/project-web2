@@ -16,6 +16,8 @@ export interface WeatherData {
   visibility?: number;
   pressure?: number;
   precipitation?: number;
+  hourlyData?: { time: string; temp: number; feelsLike: number; humidity: number }[];
+  weeklyForecast?: { day: string; high: number; low: number; condition: string; icon: string }[];
 }
 
 export interface LogisticsData {
@@ -73,6 +75,8 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       visibility: 10000,
       pressure: 1013,
       precipitation: realData.precipitation,
+      hourlyData: realData.hourlyData || [],
+      weeklyForecast: realData.weeklyForecast || [],
     };
   }
 
@@ -90,6 +94,24 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       visibility: 10000,
       pressure: 1013,
       precipitation: 0,
+      hourlyData: [
+        { time: "00:00", temp: 8, feelsLike: 5, humidity: 75 },
+        { time: "04:00", temp: 6, feelsLike: 2, humidity: 82 },
+        { time: "08:00", temp: 10, feelsLike: 7, humidity: 68 },
+        { time: "12:00", temp: 15, feelsLike: 13, humidity: 65 },
+        { time: "16:00", temp: 18, feelsLike: 16, humidity: 58 },
+        { time: "20:00", temp: 14, feelsLike: 11, humidity: 70 },
+        { time: "24:00", temp: 10, feelsLike: 7, humidity: 78 },
+      ],
+      weeklyForecast: [
+        { day: "월", high: 16, low: 8, condition: "맑음", icon: "☀️" },
+        { day: "화", high: 14, low: 6, condition: "흐림", icon: "☁️" },
+        { day: "수", high: 12, low: 5, condition: "비", icon: "🌧️" },
+        { day: "목", high: 13, low: 6, condition: "흐림", icon: "☁️" },
+        { day: "금", high: 17, low: 9, condition: "맑음", icon: "☀️" },
+        { day: "토", high: 19, low: 11, condition: "맑음", icon: "☀️" },
+        { day: "일", high: 18, low: 10, condition: "맑음", icon: "☀️" },
+      ],
     },
     "부산": {
       location: "부산, 대한민국",

@@ -32,14 +32,14 @@ export const appRouter = router({
     latest: protectedProcedure.query(async ({ ctx }) => {
       return await getLatestWeatherRecords(ctx.user.id, 10);
     }),
-    fetch: protectedProcedure
+    fetch: publicProcedure
       .input(z.object({ location: z.string() }))
       .query(async ({ ctx, input }) => {
         const startTime = Date.now();
         try {
           const data = await getWeatherData(input.location);
           await logApiCall({
-            userId: ctx.user.id,
+            userId: ctx.user?.id || 1, // Fallback for dev mode
             apiName: "weather",
             endpoint: "/api/weather/fetch",
             method: "GET",
@@ -50,7 +50,7 @@ export const appRouter = router({
           return data;
         } catch (error) {
           await logApiCall({
-            userId: ctx.user.id,
+            userId: ctx.user?.id || 1, // Fallback for dev mode
             apiName: "weather",
             endpoint: "/api/weather/fetch",
             method: "GET",

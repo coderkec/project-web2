@@ -2,55 +2,63 @@ import { ArrowLeft, Cloud, Droplets, Wind, Eye, Gauge, Sun, CloudRain } from "lu
 import { useLocation } from "wouter";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card } from "@/components/ui/card";
+import { trpc } from "@/lib/trpc";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WeatherAnalysis() {
   const [, setLocation] = useLocation();
+  const locationName = "서울"; // 기본값
 
-  // 샘플 온도 추이 데이터
-  const temperatureData = [
-    { time: "00:00", temp: 8, feelsLike: 5 },
-    { time: "04:00", temp: 6, feelsLike: 2 },
-    { time: "08:00", temp: 10, feelsLike: 7 },
-    { time: "12:00", temp: 15, feelsLike: 13 },
-    { time: "16:00", temp: 18, feelsLike: 16 },
-    { time: "20:00", temp: 14, feelsLike: 11 },
-    { time: "24:00", temp: 10, feelsLike: 7 },
-  ];
+  const { data: weather, isLoading, error } = trpc.weather.fetch.useQuery({
+    location: locationName
+  });
 
-  // 샘플 습도 데이터
-  const humidityData = [
-    { time: "00:00", humidity: 75 },
-    { time: "04:00", humidity: 82 },
-    { time: "08:00", humidity: 68 },
-    { time: "12:00", humidity: 65 },
-    { time: "16:00", humidity: 58 },
-    { time: "20:00", humidity: 70 },
-    { time: "24:00", humidity: 78 },
-  ];
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col p-6 space-y-6">
+        <Skeleton className="h-20 w-full" />
+        <div className="grid grid-cols-4 gap-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+    );
+  }
 
-  // 샘플 주간 예보
-  const weeklyForecast = [
-    { day: "월", high: 16, low: 8, condition: "맑음", icon: "☀️" },
-    { day: "화", high: 14, low: 6, condition: "흐림", icon: "☁️" },
-    { day: "수", high: 12, low: 5, condition: "비", icon: "🌧️" },
-    { day: "목", high: 13, low: 6, condition: "흐림", icon: "☁️" },
-    { day: "금", high: 17, low: 9, condition: "맑음", icon: "☀️" },
-    { day: "토", high: 19, low: 11, condition: "맑음", icon: "☀️" },
-    { day: "일", high: 18, low: 10, condition: "맑음", icon: "☀️" },
-  ];
+  if (error || !weather) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <h2 className="text-xl tech-text text-red-400 mb-4">날씨 데이터를 불러올 수 없습니다.</h2>
+        <p className="text-muted-foreground mb-6">{error?.message || "서버 연결 오류"}</p>
+        <button
+          onClick={() => setLocation("/")}
+          className="px-4 py-2 border border-primary/40 hover:bg-primary/10 transition-colors"
+        >
+          홈으로 돌아가기
+        </button>
+      </div>
+    );
+  }
 
-  // 현재 상세 정보
+  // API에서 데이터를 가져오거나 없으면 빈 배열 처리
+  const temperatureData = weather.hourlyData || [];
+  const humidityData = weather.hourlyData || []; // 동일한 시간축 사용
+  const weeklyForecast = weather.weeklyForecast || [];
+
+  // 현재 상세 정보 구성
   const currentDetails = [
-    { label: "온도", value: "15°C", icon: Cloud, color: "text-primary/60" },
-    { label: "체감 온도", value: "13°C", icon: Cloud, color: "text-primary/60" },
-    { label: "습도", value: "65%", icon: Droplets, color: "text-primary/60" },
-    { label: "풍속", value: "12 km/h", icon: Wind, color: "text-primary/60" },
-    { label: "시정", value: "10000 m", icon: Eye, color: "text-primary/60" },
-    { label: "기압", value: "1013 hPa", icon: Gauge, color: "text-primary/60" },
-    { label: "자외선", value: "5", icon: Sun, color: "text-primary/60" },
-    { label: "강수량", value: "0 mm", icon: CloudRain, color: "text-primary/60" },
-    { label: "미세먼지", value: "85 (나쁨)", icon: Wind, color: "text-red-400" },
-    { label: "초미세먼지", value: "34 (나쁨)", icon: Wind, color: "text-orange-400" },
+    { label: "온도", value: `${weather.temperature}°C`, icon: Cloud, color: "text-primary/60" },
+    { label: "체감 온도", value: `${weather.feelsLike ?? weather.temperature}°C`, icon: Cloud, color: "text-primary/60" },
+    { label: "습도", value: `${weather.humidity}%`, icon: Droplets, color: "text-primary/60" },
+    { label: "풍속", value: `${weather.windSpeed} km/h`, icon: Wind, color: "text-primary/60" },
+    { label: "시정", value: `${weather.visibility ?? 10000} m`, icon: Eye, color: "text-primary/60" },
+    { label: "기압", value: `${weather.pressure ?? 1013} hPa`, icon: Gauge, color: "text-primary/60" },
+    { label: "자외선", value: `${weather.uvIndex ?? 0}`, icon: Sun, color: "text-primary/60" },
+    { label: "강수량", value: `${weather.precipitation ?? 0} mm`, icon: CloudRain, color: "text-primary/60" },
+    { label: "상태", value: weather.condition, icon: Wind, color: "text-primary/60" },
   ];
 
   return (
@@ -66,7 +74,7 @@ export default function WeatherAnalysis() {
           </button>
           <div>
             <h1 className="tech-text text-2xl">날씨 분석</h1>
-            <p className="text-muted-foreground text-sm">서울, 대한민국</p>
+            <p className="text-muted-foreground text-sm">{weather.location}</p>
           </div>
         </div>
       </div>
@@ -196,25 +204,26 @@ export default function WeatherAnalysis() {
         </div>
 
         {/* 통계 요약 */}
+        {/* 통계 요약 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="blueprint-card p-6">
             <h3 className="tech-text text-sm mb-3">오늘 통계</h3>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">최고 온도</span>
-                <span className="font-bold">18°C</span>
+                <span className="font-bold">{weeklyForecast[0]?.high ?? weather.temperature}°C</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">최저 온도</span>
-                <span className="font-bold">6°C</span>
+                <span className="font-bold">{weeklyForecast[0]?.low ?? weather.temperature - 5}°C</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">평균 습도</span>
-                <span className="font-bold">70%</span>
+                <span className="text-muted-foreground">현재 습도</span>
+                <span className="font-bold">{weather.humidity}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">강수 확률</span>
-                <span className="font-bold">10%</span>
+                <span className="text-muted-foreground">강수량</span>
+                <span className="font-bold">{weather.precipitation ?? 0} mm</span>
               </div>
             </div>
           </Card>
@@ -224,41 +233,45 @@ export default function WeatherAnalysis() {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">평균 온도</span>
-                <span className="font-bold">15°C</span>
+                <span className="font-bold">
+                  {weeklyForecast.length > 0
+                    ? (weeklyForecast.reduce((acc, curr) => acc + (curr.high + curr.low) / 2, 0) / weeklyForecast.length).toFixed(1)
+                    : weather.temperature}°C
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">최고 온도</span>
-                <span className="font-bold">19°C</span>
+                <span className="text-muted-foreground">주간 최고</span>
+                <span className="font-bold">{Math.max(...weeklyForecast.map(d => d.high), weather.temperature)}°C</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">최저 온도</span>
-                <span className="font-bold">5°C</span>
+                <span className="text-muted-foreground">주간 최저</span>
+                <span className="font-bold">{Math.min(...weeklyForecast.map(d => d.low), weather.temperature - 5)}°C</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">맑은 날</span>
-                <span className="font-bold">4일</span>
+                <span className="text-muted-foreground">예보 기간</span>
+                <span className="font-bold">{weeklyForecast.length}일</span>
               </div>
             </div>
           </Card>
 
           <Card className="blueprint-card p-6">
-            <h3 className="tech-text text-sm mb-3">예보 정보</h3>
+            <h3 className="tech-text text-sm mb-3">현재 상태 정보</h3>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">현재 상태</span>
-                <span className="font-bold">맑음</span>
+                <span className="text-muted-foreground">날씨 상태</span>
+                <span className="font-bold">{weather.condition}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">풍향</span>
-                <span className="font-bold">북동풍</span>
+                <span className="text-muted-foreground">풍속</span>
+                <span className="font-bold">{weather.windSpeed} m/s</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">자외선 지수</span>
-                <span className="font-bold">5 (중간)</span>
+                <span className="font-bold">{weather.uvIndex ?? "정보없음"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">체감 온도</span>
-                <span className="font-bold">13°C</span>
+                <span className="font-bold">{weather.feelsLike ?? weather.temperature}°C</span>
               </div>
             </div>
           </Card>

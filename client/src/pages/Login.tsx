@@ -10,12 +10,21 @@ export default function Login() {
   const [pw, setPw] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = () => {
-    if (id === "admin" && pw === "admin123") {
-      login();
+  const manualLogin = trpc.auth.manualLogin.useMutation();
+  const utils = trpc.useUtils();
+
+  const handleLogin = async () => {
+    try {
+      setError("");
+      await manualLogin.mutateAsync({ id, pw });
+
+      // ✅ 세션 쿠키가 발급되었으므로 meQuery 무효화
+      await utils.auth.me.invalidate();
+
+      localStorage.setItem("isLoggedIn", "true");
       setLocation("/");
-    } else {
-      setError("아이디 또는 비밀번호가 틀렸습니다.");
+    } catch (err: any) {
+      setError(err.message || "아이디 또는 비밀번호가 틀렸습니다.");
     }
   };
 

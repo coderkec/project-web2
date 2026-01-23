@@ -25,6 +25,38 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    manualLogin: publicProcedure
+      .input(z.object({ id: z.string(), pw: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (input.id === "admin" && input.pw === "admin123") {
+          // 1. DB에서 어드민 유저 확인 또는 생성
+          let user = await db.getUserByOpenId("admin-id");
+          if (!user) {
+            await db.upsertUser({
+              openId: "admin-id",
+              name: "Administrator",
+              email: "admin@local",
+              loginMethod: "manual",
+              role: "admin",
+            });
+            user = await db.getUserByOpenId("admin-id");
+          }
+
+          if (!user) throw new Error("Failed to create admin user");
+
+          // 2. 세션 토킹 생성
+          const sessionToken = await sdk.createSessionToken(user.openId, {
+            name: user.name || "Admin",
+          });
+
+          // 3. 쿠키 설정
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+
+          return { success: true, user };
+        }
+        throw new Error("Invalid credentials");
+      }),
   }),
 
   // 날씨 API 라우터

@@ -5,7 +5,10 @@ export async function fetchUltraWeather(region: RegionKey) {
 
     const res = await fetch(
         `/api/weather/ultra?nx=${nx}&ny=${ny}`,
-        { headers: { Accept: "application/json" } }
+        {
+            headers: { Accept: "application/json" },
+            credentials: "include", // 🔥 로그인 쿠키 포함
+        }
     );
 
     if (!res.ok) {
@@ -20,7 +23,10 @@ export async function fetchShortWeather(region: RegionKey) {
 
     const res = await fetch(
         `/api/weather/short?nx=${nx}&ny=${ny}`,
-        { headers: { Accept: "application/json" } }
+        {
+            headers: { Accept: "application/json" },
+            credentials: "include", // 🔥 로그인 쿠키 포함
+        }
     );
 
     if (!res.ok) {

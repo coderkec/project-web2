@@ -60,26 +60,25 @@ export async function fetchDetailedAirQuality(location: string) {
 // [Real] 기상청/에너지 컨테이너 연동
 // .env에 설정된 URL을 통해 Kubernetes 서비스(또는 NodePort)를 호출합니다.
 
+const WEATHER_BASE = process.env.WEATHER_BASE_URL || "http://10.2.2.101/api";
+
+const LOC_TO_GRID: Record<string, { nx: number; ny: number }> = {
+    "서울": { nx: 60, ny: 127 },
+    "부산": { nx: 98, ny: 76 }
+};
+
 export async function fetchWeatherFromKMA(location: string) {
-    // 컨테이너 API 주소 (예: http://192.168.x.x:30080)
-    const KMA_API_URL = process.env.KMA_API_URL;
-
-    if (!KMA_API_URL) {
-        console.warn("[API Client] KMA_API_URL not defined. Using mock/fallback.");
-        return null;
-    }
-
     try {
-        // 컨테이너가 제공하는 API 명세에 따라 수정 필요
-        // 가정: GET /weather?city={location} 또는 /current
-        const response = await axios.get(`${KMA_API_URL}/weather`, {
-            params: { city: location }
-        });
+        const grid = LOC_TO_GRID[location] || LOC_TO_GRID["서울"];
 
-        // 데이터 구조가 다르다면 여기서 매핑 로직 필요
-        return response.data;
+        const [ncst, short] = await Promise.all([
+            axios.get(`${WEATHER_BASE}/weather`, { params: grid }).then(r => r.data),
+            axios.get(`${WEATHER_BASE}/weather/short`, { params: grid }).then(r => r.data)
+        ]);
+
+        return { location, ncst, short };
     } catch (error: any) {
-        return handleApiError(error, "KMA API Container");
+        return handleApiError(error, "Weather API (10.2.2.101)");
     }
 }
 

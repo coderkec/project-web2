@@ -6,10 +6,23 @@ import { EnergyCard } from "@/components/EnergyCard";
 import { DashboardStats } from "@/components/DashboardStats";
 import { Sidebar } from "@/components/Sidebar";
 import { useState, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+
+  const { data: weather, isLoading: weatherLoading } = trpc.weather.fetch.useQuery({
+    location: "서울"
+  }, {
+    enabled: !!user
+  });
+
+  const { data: energy, isLoading: energyLoading } = trpc.energy.fetch.useQuery({
+    facility: "본사빌딩"
+  }, {
+    enabled: !!user
+  });
 
   // Handle OAuth token from URL parameter
   useEffect(() => {
@@ -39,24 +52,24 @@ export default function Home() {
   const stats = [
     {
       label: "현재 기온",
-      value: "22",
+      value: weather?.temperature?.toString() || "22",
       unit: "°C",
       trend: "up" as const,
-      trendValue: 2, // 어제보다 2도 높음
+      trendValue: 2,
       icon: <Cloud className="w-5 h-5" />,
       color: "primary" as const,
     },
     {
-      label: "대기질 (미세먼지)",
-      value: "좋음",
-      unit: "PM2.5",
+      label: "습도",
+      value: weather?.humidity?.toString() || "45",
+      unit: "%",
       trend: "stable" as const,
       icon: <Wind className="w-5 h-5" />,
       color: "success" as const,
     },
     {
-      label: "전국 일일 전력 사용",
-      value: "450",
+      label: "실시간 전력 사용",
+      value: energy?.consumption?.toString() || "450",
       unit: "kWh",
       trend: "down" as const,
       trendValue: 5,
@@ -64,9 +77,9 @@ export default function Home() {
       color: "warning" as const,
     },
     {
-      label: "전력 피크 시간",
-      value: "14:00 - 15:00",
-      unit: "",
+      label: "에너지 효율",
+      value: energy?.efficiency?.toString() || "85",
+      unit: "%",
       trend: "up" as const,
       trendValue: 0,
       icon: <Calendar className="w-5 h-5" />,
@@ -102,7 +115,6 @@ export default function Home() {
             </p>
           </div>
 
-          {/* 시계 등 유틸리티 버튼은 Sidebar 하단 설정이나 별도 컴포넌트로 이동 가능, 여기선 깔끔하게 유지 */}
           <div className="flex items-center gap-4">
             <div className="px-4 py-2 bg-primary/5 rounded-full border border-primary/10 text-xs text-primary font-mono">
               System Status: Online
@@ -134,7 +146,7 @@ export default function Home() {
                   </button>
                 </div>
                 <div onClick={() => setLocation("/analysis/weather")} className="cursor-pointer hover:opacity-95 transition-all flex-1">
-                  <WeatherCard />
+                  <WeatherCard data={weather} isLoading={weatherLoading} />
                 </div>
               </div>
 
@@ -147,7 +159,7 @@ export default function Home() {
                   </button>
                 </div>
                 <div onClick={() => setLocation("/analysis/energy")} className="cursor-pointer hover:opacity-95 transition-all flex-1">
-                  <EnergyCard />
+                  <EnergyCard data={energy} isLoading={energyLoading} />
                 </div>
               </div>
             </section>

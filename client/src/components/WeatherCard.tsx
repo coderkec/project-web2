@@ -12,6 +12,9 @@ interface WeatherData {
   pressure?: number;
   uvIndex?: number;
   precipitation?: number;
+  airQuality?: string;
+  yesterdayTemp?: number;
+  tomorrowTemp?: number;
 }
 
 interface WeatherCardProps {

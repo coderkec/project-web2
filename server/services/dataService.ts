@@ -60,19 +60,23 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
   // 1. 기상청 API 호출 시도
   const realData = await fetchWeatherFromKMA(location);
 
-  if (realData) {
+  if (realData && realData.ncst) {
+    const { ncst } = realData;
+    // Extracting values from the new response format
+    // Assuming the response from 10.2.2.101 has items in a specific format
+    // Based on typical KMA API wrappers
+    const items = ncst.response?.body?.items?.item || [];
+    const findItem = (cat: string) => items.find((i: any) => i.category === cat)?.obsrValue;
+
     return {
-      location: realData.location,
-      temperature: realData.temperature,
-      humidity: realData.humidity,
-      windSpeed: realData.windSpeed,
-      condition: realData.condition,
-      description: realData.condition, // 간단하게 condition 사용
-      feelsLike: realData.temperature, // 체감온도는 별도 계산 필요하지만 일단 기온으로 대체
-      uvIndex: 0, // 초단기실황에는 없음
-      visibility: 10000,
-      pressure: 1013,
-      precipitation: realData.precipitation,
+      location: realData.location + ", 대한민국",
+      temperature: parseFloat(findItem("T1H") || "0"),
+      humidity: parseFloat(findItem("REH") || "0"),
+      windSpeed: parseFloat(findItem("WSD") || "0"),
+      condition: "정보확인중", // This could be mapped from short forecast SKY/PTY
+      description: "실시간 기상 정보",
+      feelsLike: parseFloat(findItem("T1H") || "0"),
+      precipitation: parseFloat(findItem("RN1") || "0"),
     };
   }
 

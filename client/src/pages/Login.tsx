@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { login } from "@/auth";
 import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
 
 export default function Login() {
   const [, setLocation] = useLocation();

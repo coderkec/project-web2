@@ -3,15 +3,17 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import {
-  getLatestWeatherRecords,
-  getLogisticsRecords,
-  getEnergyRecords,
-  saveWeatherRecord,
-  saveLogisticsRecord,
-  saveEnergyRecord,
-  logApiCall,
+  // getLatestWeatherRecords,
+  // getLogisticsRecords,
+  // getEnergyRecords,
+  // saveWeatherRecord,
+  // saveLogisticsRecord,
+  // saveEnergyRecord,
+  // logApiCall,
 } from "./db";
+import * as db from "./db";
 import { getWeatherData, getLogisticsData, getEnergyData } from "./services/dataService";
+import { sdk } from "./_core/sdk";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -62,7 +64,7 @@ export const appRouter = router({
   // 날씨 API 라우터
   weather: router({
     latest: protectedProcedure.query(async ({ ctx }) => {
-      return await getLatestWeatherRecords(ctx.user.id, 10);
+      return await db.getLatestWeatherRecords(ctx.user.id, 10);
     }),
     fetch: protectedProcedure
       .input(z.object({ location: z.string() }))
@@ -70,7 +72,7 @@ export const appRouter = router({
         const startTime = Date.now();
         try {
           const data = await getWeatherData(input.location);
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "weather",
             endpoint: "/api/weather/fetch",
@@ -81,7 +83,7 @@ export const appRouter = router({
           });
           return data;
         } catch (error) {
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "weather",
             endpoint: "/api/weather/fetch",
@@ -113,11 +115,11 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const startTime = Date.now();
         try {
-          await saveWeatherRecord({
+          await db.saveWeatherRecord({
             userId: ctx.user.id,
             ...input,
           });
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "weather",
             endpoint: "/api/weather/save",
@@ -128,7 +130,7 @@ export const appRouter = router({
           });
           return { success: true };
         } catch (error) {
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "weather",
             endpoint: "/api/weather/save",
@@ -146,7 +148,7 @@ export const appRouter = router({
   // 물류 API 라우터
   logistics: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return await getLogisticsRecords(ctx.user.id, 10);
+      return await db.getLogisticsRecords(ctx.user.id, 10);
     }),
     fetch: protectedProcedure
       .input(z.object({ trackingNumber: z.string() }))
@@ -154,7 +156,7 @@ export const appRouter = router({
         const startTime = Date.now();
         try {
           const data = await getLogisticsData(input.trackingNumber);
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "logistics",
             endpoint: "/api/logistics/fetch",
@@ -165,7 +167,7 @@ export const appRouter = router({
           });
           return data;
         } catch (error) {
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "logistics",
             endpoint: "/api/logistics/fetch",
@@ -197,11 +199,11 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const startTime = Date.now();
         try {
-          await saveLogisticsRecord({
+          await db.saveLogisticsRecord({
             userId: ctx.user.id,
             ...input,
           });
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "logistics",
             endpoint: "/api/logistics/save",
@@ -212,7 +214,7 @@ export const appRouter = router({
           });
           return { success: true };
         } catch (error) {
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "logistics",
             endpoint: "/api/logistics/save",
@@ -230,7 +232,7 @@ export const appRouter = router({
   // 에너지 API 라우터
   energy: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return await getEnergyRecords(ctx.user.id, 10);
+      return await db.getEnergyRecords(ctx.user.id, 10);
     }),
     fetch: protectedProcedure
       .input(z.object({ facility: z.string() }))
@@ -238,7 +240,7 @@ export const appRouter = router({
         const startTime = Date.now();
         try {
           const data = await getEnergyData(input.facility);
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "energy",
             endpoint: "/api/energy/fetch",
@@ -249,7 +251,7 @@ export const appRouter = router({
           });
           return data;
         } catch (error) {
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "energy",
             endpoint: "/api/energy/fetch",
@@ -281,11 +283,11 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const startTime = Date.now();
         try {
-          await saveEnergyRecord({
+          await db.saveEnergyRecord({
             userId: ctx.user.id,
             ...input,
           });
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "energy",
             endpoint: "/api/energy/save",
@@ -296,7 +298,7 @@ export const appRouter = router({
           });
           return { success: true };
         } catch (error) {
-          await logApiCall({
+          await db.logApiCall({
             userId: ctx.user.id,
             apiName: "energy",
             endpoint: "/api/energy/save",

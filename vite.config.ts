@@ -1,12 +1,11 @@
+// client/vite.config.ts
+
 import react from "@vitejs/plugin-react";
-import fs from "node:fs";
 import path from "path";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [
-    react(), // ✅ 이것만 남긴다
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -23,13 +22,13 @@ export default defineConfig({
   },
   server: {
     host: true,
-    allowedHosts: [
-      "localhost",
-      "127.0.0.1",
-    ],
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    allowedHosts: ["localhost", "127.0.0.1"],
+    proxy: {
+      "/api": {
+        target: "http://10.2.2.101",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

@@ -1,41 +1,66 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Cloud, Zap, Calendar, Wind } from "lucide-react";
-import { useLocation } from "wouter";
 import { WeatherCard } from "@/components/WeatherCard";
 import { EnergyCard } from "@/components/EnergyCard";
 import { DashboardStats } from "@/components/DashboardStats";
 import { Sidebar } from "@/components/Sidebar";
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { fetchUltraWeather } from "@/services/weatherApi";
 
 export default function Home() {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
 
-  const { data: weather, isLoading: weatherLoading } = trpc.weather.fetch.useQuery({
-    location: "서울"
-  }, {
-    enabled: !!user
-  });
+  /* ===============================
+     🌤️ 날씨 (REST API)
+  =============================== */
+  const [weather, setWeather] = useState<any>();
+  const [weatherLoading, setWeatherLoading] = useState(true);
 
-  const { data: energy, isLoading: energyLoading } = trpc.energy.fetch.useQuery({
-    facility: "본사빌딩"
-  }, {
-    enabled: !!user
-  });
+  useEffect(() => {
+    if (!user) return;
 
-  // Handle OAuth token from URL parameter
+    (async () => {
+      try {
+        const ultra = await fetchUltraWeather("seoul");
+
+        setWeather({
+          location: "서울, 대한민국",
+          temperature: ultra.temperature_c,
+          condition: ultra.rain_1h_mm > 0 ? "비" : "맑음",
+          humidity: ultra.humidity_pct,
+          windSpeed: ultra.wind_speed_ms,
+          yesterdayTemp: ultra.temperature_c - 1,
+          tomorrowTemp: ultra.temperature_c + 1,
+          airQuality: "보통",
+        });
+      } catch (e) {
+        console.error("[Home] weather fetch failed", e);
+      } finally {
+        setWeatherLoading(false);
+      }
+    })();
+  }, [user]);
+
+  /* ===============================
+     ⚡ 에너지 (tRPC)
+  =============================== */
+  const { data: energy, isLoading: energyLoading } =
+    trpc.energy.fetch.useQuery(
+      { facility: "본사빌딩" },
+      { enabled: !!user }
+    );
+
+  /* ===============================
+     OAuth 토큰 처리
+  =============================== */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    const token = params.get("token");
 
     if (token) {
-      console.log('[Home] Received OAuth token from URL, storing as cookie');
-      // Store token as cookie with correct name
       document.cookie = `app_session_id=${token}; path=/; max-age=31536000; SameSite=Lax`;
-      // Remove token from URL
-      window.history.replaceState({}, '', '/');
-      // Force reload to pick up the new cookie
+      window.history.replaceState({}, "", "/");
       window.location.reload();
     }
   }, []);
@@ -45,23 +70,24 @@ export default function Home() {
     year: "numeric",
     month: "long",
     day: "numeric",
-    weekday: "long"
+    weekday: "long",
   });
 
-  // 날씨 & 에너지 중심 통계 데이터
+  /* ===============================
+     상단 통계 위젯
+  =============================== */
   const stats = [
     {
       label: "현재 기온",
-      value: weather?.temperature?.toString() || "22",
+      value: weather?.temperature?.toString() || "-",
       unit: "°C",
       trend: "up" as const,
-      trendValue: 2,
       icon: <Cloud className="w-5 h-5" />,
       color: "primary" as const,
     },
     {
       label: "습도",
-      value: weather?.humidity?.toString() || "45",
+      value: weather?.humidity?.toString() || "-",
       unit: "%",
       trend: "stable" as const,
       icon: <Wind className="w-5 h-5" />,
@@ -69,19 +95,17 @@ export default function Home() {
     },
     {
       label: "실시간 전력 사용",
-      value: energy?.consumption?.toString() || "450",
+      value: energy?.consumption?.toString() || "-",
       unit: "kWh",
       trend: "down" as const,
-      trendValue: 5,
       icon: <Zap className="w-5 h-5" />,
       color: "warning" as const,
     },
     {
       label: "에너지 효율",
-      value: energy?.efficiency?.toString() || "85",
+      value: energy?.efficiency?.toString() || "-",
       unit: "%",
       trend: "up" as const,
-      trendValue: 0,
       icon: <Calendar className="w-5 h-5" />,
       color: "accent" as const,
     },
@@ -100,33 +124,23 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* 1. 사이드바 추가 */}
       <Sidebar />
 
-      {/* 2. 메인 콘텐츠 영역 */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* 헤더 */}
         <header className="bg-card/30 backdrop-blur-sm border-b border-primary/10 px-8 py-5 flex items-center justify-between sticky top-0 z-10">
           <div>
-            <h2 className="tech-text text-2xl font-semibold">안녕하세요, {user?.name}님 👋</h2>
+            <h2 className="tech-text text-2xl font-semibold">
+              안녕하세요, {user?.name}님 👋
+            </h2>
             <p className="text-muted-foreground text-sm mt-1 flex items-center gap-2">
               <Calendar className="w-3 h-3" />
               {dateString}
             </p>
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-primary/5 rounded-full border border-primary/10 text-xs text-primary font-mono">
-              System Status: Online
-            </div>
-          </div>
         </header>
 
-        {/* 스크롤 가능한 콘텐츠 영역 */}
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto space-y-8">
-
-            {/* 상단 통계 위젯 */}
             <section>
               <h3 className="tech-text text-lg mb-4 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-primary" />
@@ -135,40 +149,21 @@ export default function Home() {
               <DashboardStats stats={stats} />
             </section>
 
-            {/* 메인 대시보드 그리드 */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* 날씨 카드 */}
               <div className="space-y-4 h-full flex flex-col">
-                <div className="flex items-center justify-between">
-                  <h3 className="tech-text text-lg">날씨 모니터링</h3>
-                  <button onClick={() => setLocation("/analysis/weather")} className="text-xs text-primary hover:underline">
-                    상세보기 &rarr;
-                  </button>
-                </div>
-                <div onClick={() => setLocation("/analysis/weather")} className="cursor-pointer hover:opacity-95 transition-all flex-1">
-                  <WeatherCard data={weather} isLoading={weatherLoading} />
-                </div>
+                <h3 className="tech-text text-lg">날씨 모니터링</h3>
+                <WeatherCard data={weather} isLoading={weatherLoading} />
               </div>
 
-              {/* 에너지 카드 */}
               <div className="space-y-4 h-full flex flex-col">
-                <div className="flex items-center justify-between">
-                  <h3 className="tech-text text-lg">에너지 관리</h3>
-                  <button onClick={() => setLocation("/analysis/energy")} className="text-xs text-primary hover:underline">
-                    상세보기 &rarr;
-                  </button>
-                </div>
-                <div onClick={() => setLocation("/analysis/energy")} className="cursor-pointer hover:opacity-95 transition-all flex-1">
-                  <EnergyCard data={energy} isLoading={energyLoading} />
-                </div>
+                <h3 className="tech-text text-lg">에너지 관리</h3>
+                <EnergyCard data={energy} isLoading={energyLoading} />
               </div>
             </section>
 
-            {/* 하단 여백 및 정보 */}
             <footer className="pt-8 text-center text-xs text-muted-foreground/40 pb-8">
               Integrated Dashboard System v2.0 • Data refreshed automatically
             </footer>
-
           </div>
         </main>
       </div>

@@ -1,13 +1,17 @@
+// client/src/services/weatherApi.ts
+
 import { WEATHER_GRID, RegionKey } from "./weatherGrid";
+
+const BASE_API = "http://172.16.6.61";
 
 export async function fetchUltraWeather(region: RegionKey) {
     const { nx, ny } = WEATHER_GRID[region];
 
     const res = await fetch(
-        `/api/weather/ultra?nx=${nx}&ny=${ny}`,
+        `${BASE_API}/api/weather/ultra?nx=${nx}&ny=${ny}`,
         {
             headers: { Accept: "application/json" },
-            credentials: "include", // 🔥 로그인 쿠키 포함
+            credentials: "include",
         }
     );
 
@@ -22,10 +26,10 @@ export async function fetchShortWeather(region: RegionKey) {
     const { nx, ny } = WEATHER_GRID[region];
 
     const res = await fetch(
-        `/api/weather/short?nx=${nx}&ny=${ny}`,
+        `${BASE_API}/api/weather/short?nx=${nx}&ny=${ny}`,
         {
             headers: { Accept: "application/json" },
-            credentials: "include", // 🔥 로그인 쿠키 포함
+            credentials: "include",
         }
     );
 

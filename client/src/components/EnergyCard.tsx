@@ -116,8 +116,10 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
       </div>
 
       <div className="mt-6 pt-4 border-t border-primary/10 text-center">
-        <p className="text-sm text-green-400 font-medium">
-          🍀 {displayData.trend} 중입니다
+        <p className={`text-sm font-medium ${getTrendColor(displayData.trend)}`}>
+          {displayData.trend?.includes("전주 대비") ?
+            `🍀 ${displayData.trend} 중입니다` :
+            `🍀 현재 사용량이 ${displayData.trend || "안정"} 상태입니다`}
         </p>
       </div>
     </Card>

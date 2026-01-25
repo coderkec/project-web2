@@ -79,26 +79,6 @@ export default function WeatherAnalysis() {
         </div>
       </div>
 
-      {/* 미세먼지 경고 배너 */}
-      <div className="px-6 pt-6">
-        <Card className="blueprint-card p-4 bg-gradient-to-r from-red-900/40 to-background border-l-4 border-l-red-500">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-red-500/20 p-2 rounded-full">
-                <Wind className="w-6 h-6 text-red-400" />
-              </div>
-              <div>
-                <h3 className="font-bold text-red-200">미세먼지 나쁨 주의</h3>
-                <p className="text-sm text-muted-foreground">오늘은 마스크 착용이 권장됩니다.</p>
-              </div>
-            </div>
-            <div className="text-right hidden md:block">
-              <div className="text-2xl font-bold text-red-400">85 µg/m³</div>
-              <div className="text-xs text-muted-foreground">PM10 (현재)</div>
-            </div>
-          </div>
-        </Card>
-      </div>
 
       {/* 콘텐츠 */}
       <div className="flex-1 p-6 space-y-6">

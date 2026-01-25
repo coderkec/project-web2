@@ -107,12 +107,6 @@ export function WeatherCard({ data, isLoading, isError }: WeatherCardProps) {
             <span className="font-mono font-bold">{data.humidity}%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">미세먼지</span>
-            <span className="font-bold text-green-400">
-              {data.airQuality ?? "보통"}
-            </span>
-          </div>
-          <div className="flex justify-between">
             <span className="text-muted-foreground">풍속</span>
             <span className="font-mono font-bold">
               {data.windSpeed} m/s

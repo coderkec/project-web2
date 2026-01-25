@@ -59,50 +59,55 @@ import { fetchWeatherFromKMA } from "./apiClient";
  * 실제 환경: KMA API (기상청) 호출 -> 실패 시 샘플 데이터 반환
  */
 export async function getWeatherData(location: string): Promise<WeatherData> {
-  // 1. 기상청 API 호출 시도
+  // 1. 기상청 API 통합 호출 시도
   const realData = await fetchWeatherFromKMA(location);
 
   if (realData && realData.ncst) {
-    const { ncst } = realData;
-    // Extracting values from the new response format
-    // Assuming the response from 10.2.2.101 has items in a specific format
-    // Based on typical KMA API wrappers
+    const { ncst, short, midLand, midTemp } = realData;
     const items = ncst.response?.body?.items?.item || [];
     const findItem = (cat: string) => items.find((i: any) => i.category === cat)?.obsrValue;
 
-    // 단기 예보 파싱 (시간별 데이터 및 주간 예보 구성)
-    const shortItems = realData.short?.response?.body?.items?.item || [];
-    const hourlyData: any[] = [];
-    const dailyMap: Record<string, { high: number; low: number }> = {};
+    // 단기 예보 파싱 (시간별 데이터)
+    const shortItems = short?.response?.body?.items?.item || [];
+    const hourlyMap: Record<string, { time: string; temp: number; feelsLike: number; humidity: number }> = {};
 
     shortItems.forEach((item: any) => {
+      const timeStr = `${item.fcstTime.substring(0, 2)}:00`;
+      if (!hourlyMap[timeStr]) hourlyMap[timeStr] = { time: timeStr, temp: 0, feelsLike: 0, humidity: 0 };
       if (item.category === "TMP") {
-        const timeStr = `${item.fcstTime.substring(0, 2)}:00`;
-        if (hourlyData.length < 24) {
-          hourlyData.push({
-            time: timeStr,
-            temp: parseFloat(item.fcstValue),
-            feelsLike: parseFloat(item.fcstValue), // 단순화
-            humidity: 60 // 임시
-          });
-        }
+        hourlyMap[timeStr].temp = parseFloat(item.fcstValue);
+        hourlyMap[timeStr].feelsLike = parseFloat(item.fcstValue);
+      } else if (item.category === "REH") {
+        hourlyMap[timeStr].humidity = parseFloat(item.fcstValue);
       }
     });
 
+    // 중기 예보 파싱 (7일 예보 구성)
+    const weeklyForecast: any[] = [];
+    const midLandData = midLand?.response?.body?.items?.item?.[0] || {};
+    const midTempData = midTemp?.response?.body?.items?.item?.[0] || {};
+
+    for (let i = 3; i <= 7; i++) {
+      weeklyForecast.push({
+        day: `+${i}일`,
+        icon: midLandData[`wf${i}`]?.includes("비") ? "🌧️" : "☀️",
+        condition: midLandData[`wf${i}`] || "맑음",
+        high: midTempData[`taMax${i}`] || 15,
+        low: midTempData[`taMin${i}`] || 5,
+      });
+    }
+
     return {
-      location: realData.location + ", 대한민국",
+      location: location + ", 대한민국",
       temperature: parseFloat(findItem("T1H") || "0"),
       humidity: parseFloat(findItem("REH") || "0"),
       windSpeed: parseFloat(findItem("WSD") || "0"),
-      condition: "맑음", // 기본값
+      condition: "맑음",
       description: "실시간 기상 정보",
       feelsLike: parseFloat(findItem("T1H") || "0"),
       precipitation: parseFloat(findItem("RN1") || "0"),
-      hourlyData: hourlyData.length > 0 ? hourlyData : undefined,
-      weeklyForecast: [
-        { day: "오늘", icon: "☀️", condition: "맑음", high: 15, low: 10 },
-        { day: "내일", icon: "☁️", condition: "흐림", high: 14, low: 9 },
-      ],
+      hourlyData: Object.values(hourlyMap).slice(0, 24),
+      weeklyForecast: weeklyForecast.length > 0 ? weeklyForecast : undefined,
     };
   }
 
@@ -204,65 +209,66 @@ export async function getLogisticsData(trackingNumber: string): Promise<Logistic
   return sampleLogisticsData[trackingNumber] || sampleLogisticsData["CJ123456789"];
 }
 
-import { fetchRealtimeEnergy } from "./apiClient";
+import { fetchRealtimeEnergy, fetchKpxRealtimePower, fetchKepcoMonthlyPower, fetchGasYearlyUsage } from "./apiClient";
 
 /**
  * 에너지 데이터 조회
- * 실제 환경: Worker Node(API) 호출 -> 실패 시 샘플 데이터 반환 (Hybrid)
+ * KPX(실시간) + KEPCO(월별) + GAS(연도별) 통합
  */
 export async function getEnergyData(facility: string): Promise<EnergyData> {
-  // 1. 외부 API 호출 시도
-  const realData = await fetchRealtimeEnergy(facility);
+  const metroMapping: Record<string, string> = { "서울": "11", "부산": "26", "경기": "41" };
+  const metroCd = metroMapping[facility] || "11";
 
-  if (realData) {
-    // API 응답 구조를 EnergyData 인터페이스에 맞게 변환해야 함 (매핑 로직)
-    // 여기서는 API가 우리 DB 구조와 비슷하게 준다고 가정하거나, 필요한 필드만 매핑
-    return {
-      facility: realData.facility || facility,
-      energyType: realData.energyType || "전기",
-      consumption: realData.consumption ?? 0,
-      cost: realData.cost ?? 0,
-      efficiency: realData.efficiency,
-      carbonEmission: realData.carbonEmission,
-      peakUsage: realData.peakUsage,
-      averageUsage: realData.averageUsage,
-      trend: realData.trend,
-      notes: realData.notes,
-      recordDate: new Date(realData.recordDate || Date.now()),
-    };
+  try {
+    // 1. 실시간/통계 데이터 병렬 호출
+    const [kpx, kepco, gas] = await Promise.all([
+      fetchKpxRealtimePower(),
+      fetchKepcoMonthlyPower("2020", "11", metroCd),
+      fetchGasYearlyUsage("2020", facility)
+    ]);
+
+    if (kpx && kpx.ok) {
+      const kpxData = kpx.data;
+      const kepcoData = kepco?.data?.data?.[0]; // KEPCO 첫번째 항목
+
+      return {
+        facility: facility + " 에너지 현황",
+        energyType: "전기/가스",
+        consumption: kpxData.demand ?? 0,
+        cost: Math.round((kpxData.demand ?? 0) * 150),
+        efficiency: 88,
+        carbonEmission: Math.round((kpxData.demand ?? 0) * 0.42),
+        peakUsage: kpxData.supply ?? 0,
+        averageUsage: kepcoData?.powerUsage ? parseFloat(kepcoData.powerUsage) : (kpxData.demand ?? 0) * 0.8,
+        trend: (kpxData.supply - kpxData.demand) > 5000 ? "안정" : "주의",
+        notes: gas?.ok ? "도시가스 데이터 연동됨" : "실시간 전력 수급 중",
+        recordDate: new Date(),
+      };
+    }
+  } catch (err) {
+    console.warn("[DataService] Failed to fetch real energy data, using fallback.");
   }
 
-  // 2. 실패(또는 아직 연동 전) 시 기존 샘플 데이터 반환 (Fallback)
-  const sampleEnergyData: Record<string, EnergyData> = {
-    "본사빌딩": {
-      facility: "본사 빌딩",
-      energyType: "전기",
-      consumption: 1250,
-      cost: 187500,
-      efficiency: 78,
-      carbonEmission: 625,
-      peakUsage: 1800,
-      averageUsage: 1100,
-      trend: "하강",
-      notes: "효율성이 개선되고 있습니다",
-      recordDate: new Date(),
-    },
-    "공장": {
-      facility: "공장",
-      energyType: "전기",
-      consumption: 3500,
-      cost: 525000,
-      efficiency: 65,
-      carbonEmission: 1750,
-      peakUsage: 5000,
-      averageUsage: 3200,
-      trend: "상승",
-      notes: "생산량 증가로 인한 사용량 증가",
-      recordDate: new Date(),
-    },
+  // 3. 실패(또는 아직 연동 전) 시 기존 샘플 데이터 반환 (Fallback)
+  const defaultBase = {
+    energyType: "전기",
+    consumption: 1200 + Math.random() * 500,
+    cost: 180000,
+    efficiency: 80 + Math.random() * 10,
+    carbonEmission: 600,
+    peakUsage: 1500,
+    averageUsage: 1100,
+    trend: "안정",
+    recordDate: new Date(),
   };
 
-  return sampleEnergyData[facility] || sampleEnergyData["본사빌딩"];
+  const sampleEnergyData: Record<string, EnergyData> = {
+    "서울": { ...defaultBase, facility: "서울 오피스", consumption: 1540, cost: 231000, trend: "하강" },
+    "부산": { ...defaultBase, facility: "부산 팩토리", consumption: 3820, cost: 573000, trend: "상승" },
+    "경기": { ...defaultBase, facility: "경기 인프라", consumption: 2100, cost: 315000, trend: "안정" },
+  };
+
+  return sampleEnergyData[facility] || { ...defaultBase, facility: `${facility} 지점` };
 }
 
 /**

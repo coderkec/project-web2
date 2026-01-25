@@ -61,24 +61,61 @@ export async function fetchDetailedAirQuality(location: string) {
 // .env에 설정된 URL을 통해 Kubernetes 서비스(또는 NodePort)를 호출합니다.
 
 const WEATHER_BASE = process.env.WEATHER_BASE_URL || "http://10.2.2.101/api";
+const ENERGY_BASE = process.env.ENERGY_API_URL || "http://10.2.2.5:8000";
 
-const LOC_TO_GRID: Record<string, { nx: number; ny: number }> = {
-    "서울": { nx: 60, ny: 127 },
-    "부산": { nx: 98, ny: 76 }
+const LOC_TO_GRID: Record<string, { nx: number; ny: number; regIdLand: string; regIdTemp: string; metroCd: string }> = {
+    "서울": { nx: 60, ny: 127, regIdLand: "11B00000", regIdTemp: "11B10101", metroCd: "11" },
+    "부산": { nx: 98, ny: 76, regIdLand: "11H20000", regIdTemp: "11H20201", metroCd: "26" },
+    "인천": { nx: 55, ny: 124, regIdLand: "11B00000", regIdTemp: "11B20201", metroCd: "28" },
+    "경기": { nx: 60, ny: 120, regIdLand: "11B00000", regIdTemp: "11B20601", metroCd: "41" },
 };
 
 export async function fetchWeatherFromKMA(location: string) {
     try {
         const grid = LOC_TO_GRID[location] || LOC_TO_GRID["서울"];
 
-        const [ncst, short] = await Promise.all([
-            axios.get(`${WEATHER_BASE}/weather`, { params: grid }).then(r => r.data),
-            axios.get(`${WEATHER_BASE}/weather/short`, { params: grid }).then(r => r.data)
+        const [ncst, short, midLand, midTemp] = await Promise.all([
+            axios.get(`${WEATHER_BASE}/weather`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
+            axios.get(`${WEATHER_BASE}/weather/short`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
+            axios.get(`${WEATHER_BASE}/weather/mid/land`, { params: { regId: grid.regIdLand } }).then(r => r.data),
+            axios.get(`${WEATHER_BASE}/weather/mid/temp`, { params: { regId: grid.regIdTemp } }).then(r => r.data)
         ]);
 
-        return { location, ncst, short };
+        return { location, ncst, short, midLand, midTemp };
     } catch (error: any) {
-        return handleApiError(error, "Weather API (10.2.2.101)");
+        return handleApiError(error, "Weather API (KMA Consolidated)");
+    }
+}
+
+// 에너지 API 전용 클라이언트 함수들
+export async function fetchKpxRealtimePower() {
+    try {
+        const response = await axios.get(`${ENERGY_BASE}/kpx/now`);
+        return response.data;
+    } catch (error) {
+        return handleApiError(error, "Energy API (KPX Now)");
+    }
+}
+
+export async function fetchKepcoMonthlyPower(year: string, month: string, metroCd: string) {
+    try {
+        const response = await axios.get(`${ENERGY_BASE}/power/monthly`, {
+            params: { year, month, metroCd }
+        });
+        return response.data;
+    } catch (error) {
+        return handleApiError(error, "Energy API (KEPCO Monthly)");
+    }
+}
+
+export async function fetchGasYearlyUsage(year: string, sido: string) {
+    try {
+        const response = await axios.get(`${ENERGY_BASE}/gas/sido/year`, {
+            params: { year, sido }
+        });
+        return response.data;
+    } catch (error) {
+        return handleApiError(error, "Energy API (GAS Yearly)");
     }
 }
 

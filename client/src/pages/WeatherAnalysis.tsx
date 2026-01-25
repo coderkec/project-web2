@@ -103,9 +103,9 @@ export default function WeatherAnalysis() {
           </div>
         </div>
 
-        {/* 온도 추이 차트 */}
+        {/* 온도 변화 차트 */}
         <div>
-          <h2 className="tech-text text-lg mb-4">온도 추이 (24시간)</h2>
+          <h2 className="tech-text text-lg mb-4">시간별 온도 변화 (24시간)</h2>
           <Card className="blueprint-card p-6">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={temperatureData}>
@@ -125,7 +125,7 @@ export default function WeatherAnalysis() {
                   type="monotone"
                   dataKey="temp"
                   stroke="#3b82f6"
-                  name="온도"
+                  name="기온"
                   strokeWidth={2}
                   dot={{ fill: "#3b82f6", r: 4 }}
                 />
@@ -142,9 +142,9 @@ export default function WeatherAnalysis() {
           </Card>
         </div>
 
-        {/* 습도 추이 차트 */}
+        {/* 습도 변화 차트 */}
         <div>
-          <h2 className="tech-text text-lg mb-4">습도 추이 (24시간)</h2>
+          <h2 className="tech-text text-lg mb-4">시간별 습도 변화 (24시간)</h2>
           <Card className="blueprint-card p-6">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={humidityData}>

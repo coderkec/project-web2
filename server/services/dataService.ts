@@ -46,6 +46,7 @@ export interface EnergyData {
   trend?: string;
   notes?: string;
   recordDate: Date;
+  monthlyStats?: Array<{ month: string; electric: number; gas: number }>;
 }
 
 /**
@@ -106,9 +107,21 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       description: "실시간 기상 정보",
       feelsLike: parseFloat(findItem("T1H") || "0"),
       precipitation: parseFloat(findItem("RN1") || "0"),
-      hourlyData: Object.values(hourlyMap).slice(0, 24),
+      hourlyData: Object.values(hourlyMap).sort((a, b) => a.time.localeCompare(b.time)).slice(0, 24),
       weeklyForecast: weeklyForecast.length > 0 ? weeklyForecast : undefined,
     };
+  }
+
+  // 2. 실패 시 완벽한 24시간 Mock 데이터 생성
+  const hourlyData: any[] = [];
+  for (let i = 0; i < 24; i++) {
+    const hour = i.toString().padStart(2, "0") + ":00";
+    hourlyData.push({
+      time: hour,
+      temp: 10 + Math.sin(i / 4) * 5,
+      feelsLike: 8 + Math.sin(i / 4) * 5,
+      humidity: 60 + Math.cos(i / 4) * 10
+    });
   }
 
   // 2. 실패 시 Mock 데이터 반환 (Fallback)
@@ -250,6 +263,21 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
   }
 
   // 3. 실패(또는 아직 연동 전) 시 기존 샘플 데이터 반환 (Fallback)
+  const monthlyStats = [
+    { month: '1월', electric: 1050, gas: 620 },
+    { month: '2월', electric: 980, gas: 580 },
+    { month: '3월', electric: 850, gas: 450 },
+    { month: '4월', electric: 780, gas: 320 },
+    { month: '5월', electric: 720, gas: 280 },
+    { month: '6월', electric: 910, gas: 240 },
+    { month: '7월', electric: 1250, gas: 220 },
+    { month: '8월', electric: 1420, gas: 230 },
+    { month: '9월', electric: 950, gas: 290 },
+    { month: '10월', electric: 880, gas: 380 },
+    { month: '11월', electric: 960, gas: 510 },
+    { month: '12월', electric: 1100, gas: 650 },
+  ];
+
   const defaultBase = {
     energyType: "전기",
     consumption: 1200 + Math.random() * 500,
@@ -260,6 +288,7 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
     averageUsage: 1100,
     trend: "안정",
     recordDate: new Date(),
+    monthlyStats,
   };
 
   const sampleEnergyData: Record<string, EnergyData> = {
@@ -268,7 +297,7 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
     "경기": { ...defaultBase, facility: "경기 인프라", consumption: 2100, cost: 315000, trend: "안정" },
   };
 
-  return sampleEnergyData[facility] || { ...defaultBase, facility: `${facility} 지점` };
+  return sampleEnergyData[facility] || { ...defaultBase, facility: `${facility} 지점`, monthlyStats };
 }
 
 /**

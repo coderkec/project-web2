@@ -9,55 +9,24 @@ import { trpc } from "@/lib/trpc";
 import { fetchUltraWeather } from "@/services/weatherApi";
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
-  /* ===============================
-     🌤️ 날씨 (REST API)
-  =============================== */
-  const [weather, setWeather] = useState<any>();
-  const [weatherLoading, setWeatherLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) return;
-
-    (async () => {
-      try {
-        const ultra = await fetchUltraWeather("seoul");
-
-        setWeather({
-          location: "서울, 대한민국",
-          temperature: ultra.temperature_c,
-          condition: ultra.rain_1h_mm > 0 ? "비" : "맑음",
-          humidity: ultra.humidity_pct,
-          windSpeed: ultra.wind_speed_ms,
-          yesterdayTemp: ultra.temperature_c - 1,
-          tomorrowTemp: ultra.temperature_c + 1,
-          airQuality: "보통",
-        });
-      } catch (e) {
-        console.error("[Home] weather fetch failed", e);
-      } finally {
-        setWeatherLoading(false);
-      }
-    })();
-  }, [user]);
-
-  /* ===============================
-     ⚡ 에너지 (tRPC)
-  =============================== */
-  const { data: energy, isLoading: energyLoading } =
-    trpc.energy.fetch.useQuery(
-      { facility: "본사빌딩" },
+  // 통합 데이터 호출 (tRPC)
+  const { data: homeData, isLoading: dataLoading } =
+    trpc.dashboard.getHomeData.useQuery(
+      { location: "서울" },
       { enabled: !!user }
     );
 
+  const weather = homeData?.weather;
+  const energy = homeData?.energy;
+
   /* ===============================
-     OAuth 토큰 처리
+     OAuth 토큰 처리 (기존 유지)
   =============================== */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
-
     if (token) {
       document.cookie = `app_session_id=${token}; path=/; max-age=31536000; SameSite=Lax`;
       window.history.replaceState({}, "", "/");
@@ -73,9 +42,6 @@ export default function Home() {
     weekday: "long",
   });
 
-  /* ===============================
-     상단 통계 위젯
-  =============================== */
   const stats = [
     {
       label: "현재 기온",
@@ -111,7 +77,7 @@ export default function Home() {
     },
   ];
 
-  if (loading) {
+  if (authLoading || (user && dataLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -152,12 +118,12 @@ export default function Home() {
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-4 h-full flex flex-col">
                 <h3 className="tech-text text-lg">날씨 모니터링</h3>
-                <WeatherCard data={weather} isLoading={weatherLoading} />
+                <WeatherCard data={weather} isLoading={dataLoading} />
               </div>
 
               <div className="space-y-4 h-full flex flex-col">
                 <h3 className="tech-text text-lg">에너지 관리</h3>
-                <EnergyCard data={energy} isLoading={energyLoading} />
+                <EnergyCard data={energy} isLoading={dataLoading} />
               </div>
             </section>
 

@@ -166,22 +166,16 @@ export default function EnergyAnalysis() {
     );
   }
 
-  // API에서 가져온 일일 데이터가 없으면 기본값 생성
-  const dailyUsageData = energyData.recordDate ? [
+  // 백엔드에서 내려온 12개월 통계 데이터 사용
+  const monthlyEnergyData = energyData.monthlyStats || [];
+
+  // 일일 사용량 데이터 구성 (API 데이터가 없으면 자동 생성)
+  const dailyUsageData = [
     { time: "00:00", usage: Math.round(energyData.consumption * 0.1) },
     { time: "06:00", usage: Math.round(energyData.consumption * 0.15) },
     { time: "12:00", usage: Math.round(energyData.consumption * 0.25) },
     { time: "18:00", usage: Math.round(energyData.consumption * 0.3) },
     { time: "24:00", usage: Math.round(energyData.consumption * 0.2) },
-  ] : [];
-
-  // 월별 추이는 현재 API에서 제공하지 않으므로 기존 로직 유지 (또는 목 데이터)
-  const monthlyEnergyData = [
-    { month: '1월', electric: 980, gas: 520 },
-    { month: '2월', electric: 920, gas: 480 },
-    { month: '3월', electric: 850, gas: 420 },
-    { month: '4월', electric: 780, gas: 360 },
-    { month: '5월', electric: 720, gas: 300 },
   ];
 
   return (
@@ -262,33 +256,49 @@ export default function EnergyAnalysis() {
         {/* 월별 전력 / 가스 */}
         <div>
           <h2 className="tech-text text-lg mb-4">
-            월별 전력 및 가스 사용량 추이
+            연간 에너지 사용 분석 (1월 - 12월)
           </h2>
           <Card className="blueprint-card p-6">
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={monthlyEnergyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={monthlyEnergyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                 <XAxis
                   dataKey="month"
                   stroke="#ffffff60"
-                  tick={{ fill: "#ffffff", fontSize: 13, fontWeight: 500 }}
-                  height={60}
-                  angle={0}
-                  textAnchor="middle"
+                  tick={{ fill: "#ffffff80", fontSize: 11 }}
                   interval={0}
-                  tickLine={{ stroke: "#ffffff40" }}
-                  axisLine={{ stroke: "#ffffff40" }}
                 />
-                <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 12 }} />
+                <YAxis
+                  stroke="#ffffff60"
+                  tick={{ fill: "#ffffff80", fontSize: 11 }}
+                  label={{ value: '사용량 (Units)', angle: -90, position: 'insideLeft', fill: '#ffffff40', fontSize: 12, offset: -10 }}
+                />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#1e1e24", borderColor: "#ffffff20", borderRadius: "8px" }}
-                  itemStyle={{ color: "#fff" }}
+                  cursor={{ fill: '#ffffff05' }}
+                  contentStyle={{ backgroundColor: "#0a1428", borderColor: "#ffffff20", borderRadius: "4px" }}
+                  itemStyle={{ fontSize: '12px' }}
                 />
-                <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                <Bar dataKey="electric" fill="#3b82f6" name="전력 (kWh)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="gas" fill="#f59e0b" name="가스 (MJ)" radius={[4, 4, 0, 0]} />
+                <Legend
+                  verticalAlign="top"
+                  align="right"
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => <span className="text-xs text-muted-foreground ml-1">{value === 'electric' ? '전력 (kWh)' : '가스 (MJ)'}</span>}
+                />
+                <Bar dataKey="electric" fill="#3b82f6" name="electric" radius={[2, 2, 0, 0]} barSize={20} />
+                <Bar dataKey="gas" fill="#f59e0b" name="gas" radius={[2, 2, 0, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-4 flex justify-center gap-6 border-t border-white/5 pt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-[#3b82f6] rounded-full"></div>
+                <span className="text-xs text-muted-foreground">파란색: 전력 사용량 (kWh)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-[#f59e0b] rounded-full"></div>
+                <span className="text-xs text-muted-foreground">주황색: 가스 사용량 (MJ)</span>
+              </div>
+            </div>
           </Card>
         </div>
 

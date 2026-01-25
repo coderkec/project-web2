@@ -332,6 +332,19 @@ export const appRouter = router({
       ];
     })
   }),
+
+  // [New] 통합 대시보드 라우터
+  dashboard: router({
+    getHomeData: protectedProcedure
+      .input(z.object({ location: z.string().default("서울") }))
+      .query(async ({ input }) => {
+        const [weather, energy] = await Promise.all([
+          getWeatherData(input.location),
+          getEnergyData(input.location),
+        ]);
+        return { weather, energy };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

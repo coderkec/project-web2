@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /* =========================
    타입 정의
-========================= */
+ ========================= */
 type Region =
   | "서울"
   | "부산"
@@ -55,7 +55,7 @@ type EnergyApiResponse = {
 
 /* =========================
    BASE 데이터 (1~12월)
-========================= */
+ ========================= */
 const BASE_ENERGY_DATA: EnergyApiResponse = {
   summary: {
     totalUsage: 1250,
@@ -88,7 +88,7 @@ const BASE_ENERGY_DATA: EnergyApiResponse = {
 
 /* =========================
    지역별 더미 생성기
-========================= */
+ ========================= */
 function makeRegionData(multiplier: number): EnergyApiResponse {
   return {
     summary: {
@@ -115,7 +115,7 @@ function makeRegionData(multiplier: number): EnergyApiResponse {
 
 /* =========================
    전 지역 MOCK 데이터
-========================= */
+ ========================= */
 const MOCK_ENERGY_DATA: Record<Region, EnergyApiResponse> = {
   서울: makeRegionData(1.0),
   부산: makeRegionData(0.8),
@@ -134,7 +134,7 @@ const MOCK_ENERGY_DATA: Record<Region, EnergyApiResponse> = {
 
 /* =========================
    컴포넌트
-========================= */
+ ========================= */
 export default function EnergyAnalysis() {
   const [, setLocation] = useLocation();
   const [region, setRegion] = useState<Region>("서울");
@@ -237,8 +237,8 @@ export default function EnergyAnalysis() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="time" stroke="#ffffff60" />
-                <YAxis stroke="#ffffff60" />
+                <XAxis dataKey="time" stroke="#ffffff60" tick={{ fill: "#ffffff90", fontSize: 10 }} />
+                <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff90", fontSize: 10 }} />
                 <Tooltip />
                 <Area
                   type="monotone"
@@ -265,7 +265,7 @@ export default function EnergyAnalysis() {
                 <XAxis
                   dataKey="month"
                   stroke="#ffffff60"
-                  tick={{ fill: "#ffffff80", fontSize: 11 }}
+                  tick={{ fill: "#ffffffcc", fontSize: 11, fontWeight: "bold" }}
                   interval={0}
                 />
                 <YAxis

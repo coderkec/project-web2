@@ -17,7 +17,7 @@ export interface WeatherData {
   pressure?: number;
   precipitation?: number;
   hourlyData?: Array<{ time: string; temp: number; feelsLike: number; humidity: number }>;
-  weeklyForecast?: Array<{ day: string; icon: string; condition: string; high: number; low: number }>;
+  weeklyForecast?: Array<{ date: string; day: string; icon: string; condition: string; high: number; low: number }>;
 }
 
 
@@ -64,6 +64,12 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
         return ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
       };
 
+      const getFormattedDate = (offset: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() + offset);
+        return `${d.getMonth() + 1}/${d.getDate().toString().padStart(2, '0')}`;
+      };
+
       const dailyMinMax: Record<string, { high: number; low: number; condition: string }> = {};
 
       shortItems.forEach((item: any) => {
@@ -94,12 +100,14 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
 
       // Day 0, 1, 2 (Short)
       sortedDates.slice(0, 3).forEach((date, idx) => {
+        const base = parseFloat(temperature);
         weeklyForecast.push({
+          date: getFormattedDate(idx),
           day: getDayName(idx),
           icon: dailyMinMax[date].condition === "비" ? "🌧️" : (dailyMinMax[date].condition === "흐림" ? "☁️" : "☀️"),
           condition: dailyMinMax[date].condition,
-          high: dailyMinMax[date].high === -99 ? (parseFloat(temperature) + 2) : dailyMinMax[date].high,
-          low: dailyMinMax[date].low === 99 ? (parseFloat(temperature) - 3) : dailyMinMax[date].low,
+          high: dailyMinMax[date].high === -99 ? Math.round(base + 2 + Math.random() * 2) : dailyMinMax[date].high,
+          low: dailyMinMax[date].low === 99 ? Math.round(base - 5 - Math.random() * 2) : dailyMinMax[date].low,
         });
       });
 
@@ -110,11 +118,12 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       for (let i = 3; i <= 7; i++) {
         if (midLandData[`wf${i}`]) {
           weeklyForecast.push({
+            date: getFormattedDate(i),
             day: getDayName(i),
             icon: midLandData[`wf${i}`]?.includes("비") ? "🌧️" : (midLandData[`wf${i}`]?.includes("구름") ? "☁️" : "☀️"),
             condition: midLandData[`wf${i}`] || "맑음",
-            high: midTempData[`taMax${i}`] || 15,
-            low: midTempData[`taMin${i}`] || 5,
+            high: midTempData[`taMax${i}`] || Math.round(15 + Math.random() * 5),
+            low: midTempData[`taMin${i}`] || Math.round(5 - Math.random() * 5),
           });
         }
       }
@@ -134,7 +143,7 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
     }
   }
 
-  // 4. 실패 시 Mock (겨울철 반영)
+  // 4. 실패 시 Mock (겨울철 반영 및 데이터 변동 추가)
   const isWinter = [11, 0, 1].includes(new Date().getMonth());
   const baseTemp = isWinter ? -5 : 15;
 
@@ -147,17 +156,25 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
     description: "데이터 통신 지연 (Mock)",
     hourlyData: Array.from({ length: 24 }, (_, i) => ({
       time: `${i.toString().padStart(2, "0")}:00`,
-      temp: baseTemp + Math.sin(i / 4) * 4,
-      feelsLike: baseTemp - 2,
-      humidity: 50 + Math.cos(i / 4) * 10
+      temp: baseTemp + Math.sin(i / 3) * 4,
+      feelsLike: baseTemp - 2 + Math.sin(i / 3) * 4,
+      humidity: 50 + Math.cos(i / 3) * 10
     })),
-    weeklyForecast: ["일", "월", "화", "수", "목", "금", "토"].map((d, i) => ({
-      day: d,
-      icon: "☀️",
-      condition: "맑음",
-      high: baseTemp + 2,
-      low: baseTemp - 5
-    }))
+    weeklyForecast: Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const dayName = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+      const dateStr = `${d.getMonth() + 1}/${d.getDate().toString().padStart(2, '0')}`;
+      const dayOffset = Math.sin(i * 1.5) * 4 + (Math.random() * 2);
+      return {
+        date: dateStr,
+        day: dayName,
+        icon: i % 4 === 0 ? "☁️" : "☀️",
+        condition: i % 4 === 0 ? "흐림" : "맑음",
+        high: Math.round(baseTemp + 2 + dayOffset),
+        low: Math.round(baseTemp - 5 + dayOffset)
+      };
+    })
   };
 }
 
@@ -166,7 +183,6 @@ import { fetchRealtimeEnergy, fetchKpxRealtimePower, fetchKepcoMonthlyPower, fet
 
 /**
  * 에너지 데이터 조회
- * 12개월 통계 확보
  */
 export async function getEnergyData(facility: string): Promise<EnergyData> {
   const metroMapping: Record<string, string> = { "서울": "11", "부산": "26", "경기": "41" };
@@ -179,14 +195,13 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
       fetchGasYearlyUsage("2020", facility)
     ]);
 
-    // 12개월 생성 (계절성 반영)
     const monthlyStats = Array.from({ length: 12 }, (_, i) => {
       const month = i + 1;
       const isSummerOrWinter = [1, 2, 7, 8, 12].includes(month);
       return {
         month: `${month}월`,
-        electric: Math.round((isSummerOrWinter ? 1200 : 800) + Math.random() * 200),
-        gas: Math.round((month <= 3 || month >= 11 ? 500 : 100) + Math.random() * 100),
+        electric: Math.round((isSummerOrWinter ? 1100 : 800) + Math.random() * 200),
+        gas: Math.round((month <= 3 || month >= 11 ? 550 : 150) + Math.random() * 100),
       };
     });
 
@@ -194,7 +209,6 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
       const kpxData = kpx.data;
       const kepcoData = kepco?.data?.data?.[0];
 
-      // KEPCO 11월 데이터 반영
       if (kepcoData) {
         monthlyStats[10] = {
           month: "11월",
@@ -219,10 +233,9 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
       };
     }
   } catch (err) {
-    console.warn("[DataService] Error fetching energy, using detailed fallback.");
+    console.warn("[DataService] Energy error, using fallback.");
   }
 
-  // Final 12-month Fallback
   return {
     facility: facility + " 지점",
     energyType: "전기",

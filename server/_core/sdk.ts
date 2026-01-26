@@ -50,11 +50,15 @@ class OAuthService {
 
   private decodeState(state: string): string {
     try {
-      const decoded = Buffer.from(state, 'base64').toString('utf8');
-      console.log("[OAuth] Decoded redirectUri from state:", decoded);
+      console.log("[OAuth] Attempting to decode state:", state);
+      // Normalized state (handle URL-safe Base64 and padding)
+      const normalizedState = state.replace(/-/g, '+').replace(/_/g, '/');
+      const decoded = Buffer.from(normalizedState, 'base64').toString('utf8').trim();
+
+      console.log("[OAuth] Successfully decoded redirectUri:", decoded);
       return decoded;
     } catch (e) {
-      console.error("[OAuth] Failed to decode state:", state, e);
+      console.error("[OAuth] CRITICAL: Failed to decode state base64:", state, e);
       return "";
     }
   }
@@ -137,7 +141,7 @@ class SDKServer {
     state: string
   ): Promise<ExchangeTokenResponse> {
     if (ENV.appId.includes(".apps.googleusercontent.com")) {
-      const redirectUri = Buffer.from(state, 'base64').toString('utf8');
+      const redirectUri = Buffer.from(state.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8').trim();
       const decodedCode = code.includes("%") ? decodeURIComponent(code) : code;
 
       const params = new URLSearchParams();

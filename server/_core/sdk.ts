@@ -39,20 +39,30 @@ class OAuthService {
   }
 
   private decodeState(state: string): string {
-    const redirectUri = atob(state);
-    return redirectUri;
+    try {
+      // Use Buffer for safer base64 decoding in Node.js
+      const decoded = Buffer.from(state, 'base64').toString('utf8');
+      console.log("[OAuth] Decoded redirectUri from state:", decoded);
+      return decoded;
+    } catch (e) {
+      console.error("[OAuth] Failed to decode state:", state, e);
+      return "";
+    }
   }
 
   async getTokenByCode(
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
+    const redirectUri = this.decodeState(state);
     const payload: ExchangeTokenRequest = {
       clientId: ENV.appId,
       grantType: "authorization_code",
       code,
-      redirectUri: this.decodeState(state),
+      redirectUri,
     };
+
+    console.log("[OAuth] Requesting token with redirectUri:", redirectUri);
 
     const { data } = await this.client.post<ExchangeTokenResponse>(
       EXCHANGE_TOKEN_PATH,
@@ -123,7 +133,7 @@ class SDKServer {
     state: string
   ): Promise<ExchangeTokenResponse> {
     if (ENV.appId.includes(".apps.googleusercontent.com")) {
-      const redirectUri = atob(state);
+      const redirectUri = Buffer.from(state, 'base64').toString('utf8');
       // Ensure the code is decoded if it was double-encoded
       const decodedCode = code.includes("%") ? decodeURIComponent(code) : code;
 
@@ -134,7 +144,7 @@ class SDKServer {
       params.append("redirect_uri", redirectUri);
       params.append("grant_type", "authorization_code");
 
-      console.log("[SDK] Requesting Google token with decoded code prefix:", decodedCode.substring(0, 10) + "...");
+      console.log("[SDK] Requesting Google token with decoded redirectUri:", redirectUri);
 
       try {
         // Send credentials in both body and Authorization header for compatibility

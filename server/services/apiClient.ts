@@ -45,6 +45,7 @@ export async function fetchCompanyNotices() {
     }
 }
 
+
 // [아이디어 3] 상세 대기질 - PC3 or Public API
 export async function fetchDetailedAirQuality(location: string) {
     try {
@@ -69,20 +70,29 @@ const LOC_TO_GRID: Record<string, { nx: number; ny: number; regIdLand: string; r
 };
 
 export async function fetchWeatherFromKMA(location: string) {
-    try {
-        const grid = LOC_TO_GRID[location] || LOC_TO_GRID["서울"];
+    const grid = LOC_TO_GRID[location] || LOC_TO_GRID["서울"];
 
-        const [ncst, short, midLand, midTemp] = await Promise.all([
-            axios.get(`${KMA_API_URL}/weather`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
-            axios.get(`${KMA_API_URL}/weather/short`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
-            axios.get(`${KMA_API_URL}/weather/mid/land`, { params: { regId: grid.regIdLand } }).then(r => r.data),
-            axios.get(`${KMA_API_URL}/weather/mid/temp`, { params: { regId: grid.regIdTemp } }).then(r => r.data)
-        ]);
+    // 개별 호출을 독립적으로 처리하여 하나가 실패해도 나머지는 살립니다.
+    const fetchSafe = async (url: string, params: any, name: string) => {
+        try {
+            console.log(`[Weather API] Requesting ${name} from: ${url}`);
+            const r = await axios.get(url, { params, timeout: 4000 });
+            return r.data;
+        } catch (e: any) {
+            console.error(`[Weather API] ${name} fetch failed:`, e.message);
+            return null;
+        }
+    };
 
-        return { location, ncst, short, midLand, midTemp };
-    } catch (error: any) {
-        return handleApiError(error, "Weather API (KMA Consolidated)");
-    }
+    // 사용자의 피드백을 반영하여 초단기 실황 엔드포인트를 /weather/ultra로 수정
+    const [ncst, short, midLand, midTemp] = await Promise.all([
+        fetchSafe(`${KMA_API_URL}/weather/ultra`, { nx: grid.nx, ny: grid.ny }, "Current NCST (Ultra)"),
+        fetchSafe(`${KMA_API_URL}/weather/short`, { nx: grid.nx, ny: grid.ny }, "Short Forecast"),
+        fetchSafe(`${KMA_API_URL}/weather/mid/land`, { regId: grid.regIdLand }, "Mid Land"),
+        fetchSafe(`${KMA_API_URL}/weather/mid/temp`, { regId: grid.regIdTemp }, "Mid Temp")
+    ]);
+
+    return { location, ncst, short, midLand, midTemp };
 }
 
 // 에너지 API 전용 클라이언트 함수들

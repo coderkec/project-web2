@@ -64,7 +64,7 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
       <div className="flex justify-between items-start mb-6">
         <div>
           <h3 className="tech-text text-xl font-bold mb-1">전국 전력 현황</h3>
-          <p className="text-sm text-primary/80 font-mono">일별 전력 사용 패턴 요약</p>
+          <p className="text-sm text-primary/80 font-mono">월별 전력 사용 패턴 요약</p>
         </div>
         <div className="p-3 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
           <Zap className="w-8 h-8 text-yellow-400" />
@@ -116,11 +116,14 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
       </div>
 
       <div className="mt-6 pt-4 border-t border-primary/10 text-center">
-        <p className={`text-sm font-medium ${getTrendColor(displayData.trend)}`}>
-          {displayData.trend?.includes("전주 대비") ?
-            `🍀 ${displayData.trend} 중입니다` :
-            `🍀 현재 사용량이 ${displayData.trend || "안정"} 상태입니다`}
-        </p>
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          <p className={`text-sm font-medium ${getTrendColor(displayData.trend)}`}>
+            {displayData.trend?.includes("전주 대비") ?
+              `${displayData.trend} 중입니다` :
+              `현재 사용량이 ${displayData.trend || "안정"} 상태입니다`}
+          </p>
+        </div>
       </div>
     </Card>
   );

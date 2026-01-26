@@ -29,9 +29,11 @@ spec:
         - name: JWT_SECRET
           value: "integrated-dashboard-secret-8877"
         - name: VITE_APP_ID
-          value: "YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER" # 서버에서 배포 시 실제 값으로 변경하세요
+          value: "116278425083-h8gi5c8u24gcoudtfbks9u8bkfknc1n7.apps.googleusercontent.com"
+        - name: GOOGLE_CLIENT_ID
+          value: "116278425083-h8gi5c8u24gcoudtfbks9u8bkfknc1n7.apps.googleusercontent.com"
         - name: GOOGLE_CLIENT_SECRET
-          value: "GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxxxxxx" # !!! [중요] 여기에 실제 구글 클라이언트 시크릿을 입력해주세요 !!!
+          value: "PLACEHOLDER_SET_ON_SERVER" # GitHub side safety: please set this manually in deployment.yaml on the server
         resources:
           limits:
             cpu: "1"

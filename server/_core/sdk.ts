@@ -14,7 +14,7 @@ import type {
   GetUserInfoWithJwtRequest,
   GetUserInfoWithJwtResponse,
 } from "./types/manusTypes";
-// Utility function
+
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
@@ -31,7 +31,7 @@ function safeUrl(base: string, path: string = ""): string {
     return new URL(path, base).toString();
   } catch (e) {
     console.error(`[SDK] Invalid URL components: base=${base}, path=${path}`);
-    return base + path; // Fallback to simple concatenation
+    return base + path;
   }
 }
 
@@ -41,23 +41,14 @@ const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserI
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
-      console.warn(
-        "[OAuth] WARNING: OAUTH_SERVER_URL is not configured! Defaulting to manus.run for exchange."
-      );
-    }
+    console.log("[OAuth] Initialized. baseURL:", this.client.defaults.baseURL);
   }
 
   private decodeState(state: string): string {
     try {
-      console.log("[OAuth] decodeState INPUT:", state);
       if (!state) return "";
-      // Handle URL-safe base64 and standard base64
       const normalizedState = state.replace(/-/g, '+').replace(/_/g, '/');
-      const decoded = Buffer.from(normalizedState, 'base64').toString('utf8').trim();
-      console.log("[OAuth] decodeState OUTPUT:", decoded);
-      return decoded;
+      return Buffer.from(normalizedState, 'base64').toString('utf8').trim();
     } catch (e) {
       console.error("[OAuth] decodeState FAILED:", state, e);
       return "";
@@ -70,18 +61,15 @@ class OAuthService {
   ): Promise<ExchangeTokenResponse> {
     const redirectUri = this.decodeState(state);
     const payload: ExchangeTokenRequest = {
-      clientId: ENV.appId,
+      clientId: ENV.googleClientId,
       grantType: "authorization_code",
       code,
       redirectUri,
     };
 
-    console.log("[OAuth] Requesting token from Portal:", {
-      baseURL: this.client.defaults.baseURL,
-      path: EXCHANGE_TOKEN_PATH,
-      redirectUri,
-      codeSnippet: code.substring(0, 5) + "..."
-    });
+    if (!this.client.defaults.baseURL || this.client.defaults.baseURL.includes("manus.run")) {
+      throw new Error("Misconfigured OAuth Service: No valid Portal URL provided and Google flow was not triggered.");
+    }
 
     try {
       const { data } = await this.client.post<ExchangeTokenResponse>(
@@ -104,14 +92,13 @@ class OAuthService {
         accessToken: token.accessToken,
       }
     );
-
     return data;
   }
 }
 
 const createOAuthHttpClient = (): AxiosInstance =>
   axios.create({
-    baseURL: ENV.oAuthServerUrl || "https://oauth.manus.run",
+    baseURL: ENV.oAuthServerUrl || "", // REMOVED MANUS FALLBACK
     timeout: AXIOS_TIMEOUT_MS,
   });
 
@@ -124,220 +111,65 @@ class SDKServer {
     this.oauthService = new OAuthService(this.client);
   }
 
-  private deriveLoginMethod(
-    platforms: unknown,
-    fallback: string | null | undefined
-  ): string | null {
-    if (fallback && fallback.length > 0) return fallback;
-    if (!Array.isArray(platforms) || platforms.length === 0) return null;
-    const set = new Set<string>(
-      platforms.filter((p): p is string => typeof p === "string")
-    );
-    if (set.has("REGISTERED_PLATFORM_EMAIL")) return "email";
-    if (set.has("REGISTERED_PLATFORM_GOOGLE")) return "google";
-    if (set.has("REGISTERED_PLATFORM_APPLE")) return "apple";
-    if (
-      set.has("REGISTERED_PLATFORM_MICROSOFT") ||
-      set.has("REGISTERED_PLATFORM_AZURE")
-    )
-      return "microsoft";
-    if (set.has("REGISTERED_PLATFORM_GITHUB")) return "github";
-    const first = Array.from(set)[0];
-    return first ? first.toLowerCase() : null;
+  private isGoogleFlow(): boolean {
+    const id = ENV.googleClientId || "";
+    const secret = ENV.googleClientSecret || "";
+    const isGoogle = id.includes(".apps.googleusercontent.com") || secret.startsWith("GOCSPX-");
+    console.log(`[SDK] Flow Detection - Google: ${isGoogle}, ClientID: ${id.substring(0, 10)}..., Secret: ${!!secret}`);
+    return isGoogle;
   }
 
   async exchangeCodeForToken(
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
-    console.log("[SDK] exchangeCodeForToken START:", { codeSnippet: code.substring(0, 5), state });
 
-    if (ENV.appId.includes(".apps.googleusercontent.com")) {
-      console.log("[SDK] Detected Google OAuth flow");
-      let redirectUri = "";
-      try {
-        const normalizedState = state.replace(/-/g, '+').replace(/_/g, '/');
-        redirectUri = Buffer.from(normalizedState, 'base64').toString('utf8').trim();
-        console.log("[SDK] Decoded Google redirectUri:", redirectUri);
-      } catch (e) {
-        console.error("[SDK] Failed to decode Google state:", state, e);
-        throw new Error("Invalid URL (State decoding failed)");
-      }
-
-      if (!redirectUri || !redirectUri.startsWith("http")) {
-        console.error("[SDK] Decoded redirectUri is NOT a valid URL:", redirectUri);
-        throw new Error("Invalid URL (State is not a valid URL)");
-      }
+    if (this.isGoogleFlow()) {
+      console.log("[SDK] Executing Google OAuth Exchange");
+      const normalizedState = state.replace(/-/g, '+').replace(/_/g, '/');
+      const redirectUri = Buffer.from(normalizedState, 'base64').toString('utf8').trim();
 
       const decodedCode = code.includes("%") ? decodeURIComponent(code) : code;
-
       const params = new URLSearchParams();
       params.append("code", decodedCode);
-      params.append("client_id", ENV.appId);
+      params.append("client_id", ENV.googleClientId);
       params.append("client_secret", ENV.googleClientSecret);
       params.append("redirect_uri", redirectUri);
       params.append("grant_type", "authorization_code");
 
-      try {
-        const authHeader = `Basic ${Buffer.from(`${ENV.appId}:${ENV.googleClientSecret}`).toString("base64")}`;
-        console.log("[SDK] POSTing to Google Token Endpoint with redirect_uri:", redirectUri);
+      const { data } = await axios.post("https://oauth2.googleapis.com/token", params.toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
 
-        const { data } = await axios.post("https://oauth2.googleapis.com/token", params.toString(), {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": authHeader
-          },
-        });
-
-        console.log("[SDK] Google Token SUCCESS");
-        return {
-          accessToken: data.access_token,
-          tokenType: data.token_type,
-          expiresIn: data.expires_in,
-          idToken: data.id_token,
-          scope: data.scope,
-        };
-      } catch (error: any) {
-        if (error.response) {
-          console.error("[SDK] Google Token ERROR Response:", error.response.data);
-          throw new Error(`OAuth callback failed: ${error.response.data.error_description || error.response.data.error || "Google rejection"}`);
-        }
-        console.error("[SDK] Google Token ERROR Message:", error.message);
-        throw error;
-      }
+      return {
+        accessToken: data.access_token,
+        tokenType: data.token_type,
+        expiresIn: data.expires_in,
+        idToken: data.id_token,
+        scope: data.scope,
+      };
     }
+
+    console.warn("[SDK] Google flow not detected, falling back to Portal (likely failure)");
     return this.oauthService.getTokenByCode(code, state);
   }
 
   async getUserInfo(accessToken: string): Promise<GetUserInfoResponse> {
-    if (ENV.appId.includes(".apps.googleusercontent.com")) {
+    if (this.isGoogleFlow()) {
       const { data } = await axios.get("https://openidconnect.googleapis.com/v1/userinfo", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       return {
         openId: data.sub,
-        projectId: ENV.appId,
+        projectId: ENV.googleClientId,
         name: data.name || data.email?.split("@")[0] || "Google User",
         email: data.email ?? null,
         platform: "google",
         loginMethod: "google",
       };
     }
-    const data = await this.oauthService.getUserInfoByToken({
-      accessToken,
-    } as ExchangeTokenResponse);
-    const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
-    );
-    return {
-      ...(data as any),
-      platform: loginMethod,
-      loginMethod,
-    } as GetUserInfoResponse;
-  }
-
-  private parseCookies(cookieHeader: string | undefined) {
-    if (!cookieHeader) {
-      return new Map<string, string>();
-    }
-
-    const parsed = parseCookieHeader(cookieHeader);
-    return new Map(Object.entries(parsed));
-  }
-
-  private getSessionSecret() {
-    const secret = ENV.cookieSecret;
-    return new TextEncoder().encode(secret);
-  }
-
-  async createSessionToken(
-    openId: string,
-    options: { expiresInMs?: number; name?: string } = {}
-  ): Promise<string> {
-    return this.signSession(
-      {
-        openId,
-        appId: ENV.appId,
-        name: options.name || "",
-      },
-      options
-    );
-  }
-
-  async signSession(
-    payload: SessionPayload,
-    options: { expiresInMs?: number } = {}
-  ): Promise<string> {
-    const issuedAt = Date.now();
-    const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
-    const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
-    const secretKey = this.getSessionSecret();
-
-    return new SignJWT({
-      openId: payload.openId,
-      appId: payload.appId,
-      name: payload.name,
-    })
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setExpirationTime(expirationSeconds)
-      .sign(secretKey);
-  }
-
-  async verifySession(
-    cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
-    if (!cookieValue) {
-      return null;
-    }
-
-    try {
-      const secretKey = this.getSessionSecret();
-      const { payload } = await jwtVerify(cookieValue, secretKey, {
-        algorithms: ["HS256"],
-      });
-      const { openId, appId, name } = payload as Record<string, unknown>;
-
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
-      ) {
-        return null;
-      }
-
-      return {
-        openId,
-        appId,
-        name,
-      };
-    } catch (error) {
-      return null;
-    }
-  }
-
-  async getUserInfoWithJwt(
-    jwtToken: string
-  ): Promise<GetUserInfoWithJwtResponse> {
-    const payload: GetUserInfoWithJwtRequest = {
-      jwtToken,
-      projectId: ENV.appId,
-    };
-
-    const { data } = await this.client.post<GetUserInfoWithJwtResponse>(
-      GET_USER_INFO_WITH_JWT_PATH,
-      payload
-    );
-
-    const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
-    );
-    return {
-      ...(data as any),
-      platform: loginMethod,
-      loginMethod,
-    } as GetUserInfoWithJwtResponse;
+    const data = await this.oauthService.getUserInfoByToken({ accessToken } as ExchangeTokenResponse);
+    return { ...data, platform: "google", loginMethod: "google" } as GetUserInfoResponse;
   }
 
   async authenticateRequest(req: Request): Promise<User> {
@@ -345,40 +177,44 @@ class SDKServer {
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
 
-    if (!session) {
-      throw ForbiddenError("Invalid session cookie");
-    }
+    if (!session) throw ForbiddenError("Invalid session cookie");
 
-    const sessionUserId = session.openId;
-    const signedInAt = new Date();
-    let user = await db.getUserByOpenId(sessionUserId);
-
+    let user = await db.getUserByOpenId(session.openId);
     if (!user) {
-      try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
-        await db.upsertUser({
-          openId: userInfo.openId,
-          name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-          lastSignedIn: signedInAt,
-        });
-        user = await db.getUserByOpenId(userInfo.openId);
-      } catch (error) {
-        throw ForbiddenError("Failed to sync user info");
-      }
+      // Simple fallback if user is in-session but not in DB (rare)
+      await db.upsertUser({
+        openId: session.openId,
+        name: session.name || "User",
+        email: null,
+        loginMethod: "google",
+        lastSignedIn: new Date(),
+      });
+      user = await db.getUserByOpenId(session.openId);
     }
+    return user!;
+  }
 
-    if (!user) {
-      throw ForbiddenError("User not found");
-    }
+  private parseCookies(header: string | undefined) {
+    if (!header) return new Map<string, string>();
+    return new Map(Object.entries(parseCookieHeader(header)));
+  }
 
-    await db.upsertUser({
-      openId: user.openId,
-      lastSignedIn: signedInAt,
-    });
+  private getSessionSecret() {
+    return new TextEncoder().encode(ENV.cookieSecret);
+  }
 
-    return user;
+  async createSessionToken(openId: string, options: { name?: string; expiresInMs?: number } = {}) {
+    const payload: SessionPayload = { openId, appId: ENV.googleClientId, name: options.name || "" };
+    const expires = Math.floor((Date.now() + (options.expiresInMs ?? ONE_YEAR_MS)) / 1000);
+    return new SignJWT(payload).setProtectedHeader({ alg: "HS256", typ: "JWT" }).setExpirationTime(expires).sign(this.getSessionSecret());
+  }
+
+  async verifySession(token: string | undefined | null): Promise<SessionPayload | null> {
+    if (!token) return null;
+    try {
+      const { payload } = await jwtVerify(token, this.getSessionSecret(), { algorithms: ["HS256"] });
+      return payload as SessionPayload;
+    } catch { return null; }
   }
 }
 

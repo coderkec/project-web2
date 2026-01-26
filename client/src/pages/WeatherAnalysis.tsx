@@ -37,7 +37,7 @@ export default function WeatherAnalysis() {
     });
 
   /* ===============================
-     🔥 핵심: 차트용 데이터 가공
+     🔥 차트용 데이터 가공
   =============================== */
   const hourly = weather?.hourlyData || [];
 
@@ -61,12 +61,6 @@ export default function WeatherAnalysis() {
     return (
       <div className="min-h-screen bg-background flex flex-col p-6 space-y-6">
         <Skeleton className="h-20 w-full" />
-        <div className="grid grid-cols-4 gap-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
         <Skeleton className="h-[300px] w-full" />
       </div>
     );
@@ -74,19 +68,21 @@ export default function WeatherAnalysis() {
 
   if (error || !weather) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-xl tech-text text-red-500 mb-2">
-          데이터 로드 실패
-        </h2>
-        <p className="text-muted-foreground mb-6">
-          {error?.message || "서버 오류"}
-        </p>
-        <button
-          onClick={() => setLocation("/")}
-          className="px-6 py-2 bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all rounded"
-        >
-          돌아가기
-        </button>
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-center">
+          <h2 className="text-xl tech-text text-red-500 mb-2">
+            데이터 로드 실패
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            {error?.message || "서버 오류"}
+          </p>
+          <button
+            onClick={() => setLocation("/")}
+            className="px-6 py-2 bg-primary/10 border border-primary/20 rounded"
+          >
+            돌아가기
+          </button>
+        </div>
       </div>
     );
   }
@@ -128,7 +124,7 @@ export default function WeatherAnalysis() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setLocation("/")}
-            className="p-2 hover:bg-primary/10 transition-colors rounded"
+            className="p-2 hover:bg-primary/10 rounded"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
@@ -141,13 +137,15 @@ export default function WeatherAnalysis() {
                 </span>
               )}
             </div>
-            <p className="text-muted-foreground text-sm">{weather.location}</p>
+            <p className="text-muted-foreground text-sm">
+              {weather.location}
+            </p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 p-6 space-y-8">
-        {/* 현재 정보 */}
+        {/* 현재 정보 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {currentDetails.map((d, i) => {
             const Icon = d.icon;
@@ -165,23 +163,45 @@ export default function WeatherAnalysis() {
           })}
         </div>
 
-        {/* 온도 차트 */}
+        {/* ===============================
+            온도 차트 (🔴 여기서 색상 수정)
+        =============================== */}
         <Card className="blueprint-card p-6 overflow-x-auto">
           <h2 className="tech-text text-lg mb-4 flex items-center gap-2">
             <Cloud className="w-5 h-5 text-blue-400" />
             시간별 온도 변화 (24시간)
           </h2>
+
           <div className="h-[320px] min-w-[600px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={temperatureData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff15" />
-                <XAxis dataKey="time" tick={{ fill: "#fff", fontSize: 11 }} />
-                <YAxis
-                  tick={{ fill: "#fff", fontSize: 11 }}
-                  domain={["auto", "auto"]}
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+
+                {/* 🔥 X축 숫자 색 */}
+                <XAxis
+                  dataKey="time"
+                  tick={{ fill: "#0f172a", fontSize: 11, fontWeight: 700 }}
+                  stroke="#94a3b8"
                 />
-                <Tooltip />
+
+                {/* 🔥 Y축 숫자 색 */}
+                <YAxis
+                  domain={["auto", "auto"]}
+                  tick={{ fill: "#0f172a", fontSize: 11 }}
+                  stroke="#94a3b8"
+                />
+
+                {/* 🔥 Tooltip 색 */}
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#ffffff",
+                    color: "#0f172a",
+                    border: "1px solid #cbd5f5",
+                  }}
+                />
+
                 <Legend />
+
                 <Line
                   type="monotone"
                   dataKey="temp"
@@ -203,19 +223,39 @@ export default function WeatherAnalysis() {
           </div>
         </Card>
 
-        {/* 습도 차트 */}
+        {/* ===============================
+            습도 차트 (🔴 여기서도 동일)
+        =============================== */}
         <Card className="blueprint-card p-6 overflow-x-auto">
           <h2 className="tech-text text-lg mb-4 flex items-center gap-2">
             <Droplets className="w-5 h-5 text-cyan-400" />
             시간별 습도 변화 (24시간)
           </h2>
+
           <div className="h-[270px] min-w-[600px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={humidityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff15" />
-                <XAxis dataKey="time" tick={{ fill: "#fff", fontSize: 11 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: "#fff", fontSize: 11 }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+
+                <XAxis
+                  dataKey="time"
+                  tick={{ fill: "#0f172a", fontSize: 11, fontWeight: 700 }}
+                  stroke="#94a3b8"
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fill: "#0f172a", fontSize: 11 }}
+                  stroke="#94a3b8"
+                />
+
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#ffffff",
+                    color: "#0f172a",
+                    border: "1px solid #cbd5f5",
+                  }}
+                />
+
                 <Bar
                   dataKey="humidity"
                   fill="#06b6d4"
@@ -233,13 +273,16 @@ export default function WeatherAnalysis() {
             <Calendar className="w-5 h-5 text-primary" />
             7일 예보
           </h2>
+
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             {weeklyForecast.slice(0, 7).map((day: any, idx: number) => (
               <Card key={idx} className="blueprint-card p-4 text-center">
                 <p className="text-[10px] text-muted-foreground mb-1">
                   {day.date}
                 </p>
-                <p className="font-bold text-sm mb-3">{day.day}요일</p>
+                <p className="font-bold text-sm mb-3">
+                  {day.day}요일
+                </p>
                 <div className="text-4xl mb-2">{day.icon}</div>
                 <p className="text-xs text-muted-foreground">
                   {day.condition}

@@ -108,16 +108,15 @@ export default function EnergyAnalysis() {
   }
 
   /* ===============================
-     🔥 핵심: 숫자 안전 처리
+     🔥 숫자 안전 처리
   =============================== */
   const mult = regionMultiplier[region];
   const base = Number(energyData.consumption ?? 0);
   const adjusted = Math.round(base * mult);
-
   const safeAdjusted = adjusted || 0;
 
   /* ===============================
-     시간대별 (가공 데이터)
+     시간대별 사용량 (가공)
   =============================== */
   const dailyUsageData = [
     { time: "00:00", usage: Math.round(safeAdjusted * 0.1) },
@@ -182,7 +181,9 @@ export default function EnergyAnalysis() {
           </div>
         </Card>
 
-        {/* 시간대별 사용량 */}
+        {/* ===============================
+            시간대별 전력 사용량 (🔴 색상 수정)
+        =============================== */}
         <Card className="blueprint-card p-6 overflow-x-auto overflow-y-visible">
           <h2 className="tech-text text-lg mb-4 flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-400" />
@@ -205,25 +206,26 @@ export default function EnergyAnalysis() {
                   </linearGradient>
                 </defs>
 
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff15" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+
                 <XAxis
                   dataKey="time"
-                  interval={1}
-                  height={50}
-                  tick={{ fill: "#ffffff", fontSize: 11, fontWeight: 700 }}
-                  stroke="#ffffff80"
+                  tick={{ fill: "#0f172a", fontSize: 11, fontWeight: 700 }}
+                  stroke="#94a3b8"
                 />
                 <YAxis
                   domain={["auto", "auto"]}
-                  tick={{ fill: "#ffffff", fontSize: 11 }}
-                  stroke="#ffffff60"
+                  tick={{ fill: "#0f172a", fontSize: 11 }}
+                  stroke="#94a3b8"
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0a1428",
-                    borderColor: "#3b82f640",
+                    backgroundColor: "#ffffff",
+                    color: "#0f172a",
+                    border: "1px solid #cbd5f5",
                   }}
                 />
+
                 <Area
                   type="monotone"
                   dataKey="usage"
@@ -236,7 +238,9 @@ export default function EnergyAnalysis() {
           </div>
         </Card>
 
-        {/* 연간 소비 */}
+        {/* ===============================
+            연간 에너지 소비 (🔴 색상 수정)
+        =============================== */}
         <Card className="blueprint-card p-6 overflow-x-auto overflow-y-visible">
           <h2 className="tech-text text-lg mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-yellow-400" />
@@ -246,26 +250,29 @@ export default function EnergyAnalysis() {
           <div className="h-[380px] w-full min-w-[600px] overflow-visible">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+
                 <XAxis
                   dataKey="month"
                   interval={0}
-                  height={50}
-                  tick={{ fill: "#ffffff", fontSize: 12, fontWeight: 800 }}
-                  stroke="#ffffff80"
+                  tick={{ fill: "#0f172a", fontSize: 12, fontWeight: 800 }}
+                  stroke="#94a3b8"
                 />
                 <YAxis
                   domain={["auto", "auto"]}
-                  tick={{ fill: "#ffffff", fontSize: 11 }}
-                  stroke="#ffffff60"
+                  tick={{ fill: "#0f172a", fontSize: 11 }}
+                  stroke="#94a3b8"
                 />
+
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0a1428",
-                    borderColor: "#ffffff20",
+                    backgroundColor: "#ffffff",
+                    color: "#0f172a",
+                    border: "1px solid #cbd5f5",
                   }}
                 />
                 <Legend />
+
                 <Bar
                   dataKey="electric"
                   fill="#3b82f6"

@@ -1,4 +1,4 @@
-import { ArrowLeft, Cloud, Droplets, Wind, Eye, Gauge, Sun, CloudRain } from "lucide-react";
+import { ArrowLeft, Cloud, Droplets, Wind, Eye, Gauge, Sun, CloudRain, Radio } from "lucide-react";
 import { useLocation } from "wouter";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card } from "@/components/ui/card";
@@ -64,8 +64,19 @@ export default function WeatherAnalysis() {
       <div className="bg-card/50 border-b border-primary/20 px-6 py-4">
         <div className="flex items-center gap-4">
           <button onClick={() => setLocation("/")} className="p-2 hover:bg-primary/10 transition-colors"><ArrowLeft className="w-6 h-6" /></button>
-          <div>
-            <h1 className="tech-text text-2xl">날씨 분석</h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="tech-text text-2xl">날씨 분석</h1>
+              {weather.isRealData ? (
+                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold rounded-full border border-green-500/30 animate-pulse">
+                  <Radio className="w-3 h-3" /> LIVE
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] font-bold rounded-full border border-white/5">
+                  SIMULATED
+                </span>
+              )}
+            </div>
             <p className="text-muted-foreground text-sm">{weather.location}</p>
           </div>
         </div>
@@ -98,7 +109,7 @@ export default function WeatherAnalysis() {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={temperatureData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="time" stroke="#ffffff60" style={{ fontSize: "10px" }} tick={{ fill: "#ffffff80" }} interval={2} />
+                <XAxis dataKey="time" stroke="#ffffff60" style={{ fontSize: "10px" }} tick={{ fill: "#ffffff80" }} interval={1} />
                 <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
                 <Tooltip contentStyle={{ backgroundColor: "#0a1428", border: "1px solid #ffffff30" }} />
                 <Legend />
@@ -115,7 +126,13 @@ export default function WeatherAnalysis() {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={humidityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="time" stroke="#ffffff60" style={{ fontSize: "10px" }} tick={{ fill: "#ffffffcc" }} interval={1} />
+                <XAxis
+                  dataKey="time"
+                  stroke="#ffffff60"
+                  style={{ fontSize: "9px" }}
+                  tick={{ fill: "#ffffffcc" }}
+                  interval={0}
+                />
                 <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
                 <Tooltip contentStyle={{ backgroundColor: "#0a1428", border: "1px solid #ffffff30" }} />
                 <Bar dataKey="humidity" fill="#06b6d4" name="습도 (%)" />
@@ -124,20 +141,28 @@ export default function WeatherAnalysis() {
           </Card>
         </div>
 
+        {/* 7일 예보 */}
         <div>
           <h2 className="tech-text text-lg mb-4">7일 예보</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             {weeklyForecast.slice(0, 7).map((day, idx) => (
               <Card key={idx} className="blueprint-card p-4 text-center hover:border-primary/40 transition-colors">
-                <p className="text-[10px] text-muted-foreground mb-1">{day.date}</p>
+                <p className="text-[10px] text-muted-foreground mb-1 font-mono tracking-tighter opacity-70">{day.date}</p>
                 <p className="font-bold text-sm mb-3 border-b border-primary/10 pb-2">{day.day}요일</p>
                 <div className="py-2">
-                  <span className="text-4xl block mb-2">{day.icon}</span>
+                  <span className="text-4xl block mb-2 transition-transform hover:scale-110 duration-300">{day.icon}</span>
                   <p className="text-xs text-muted-foreground font-medium">{day.condition}</p>
                 </div>
-                <div className="flex justify-center items-center gap-3 mt-3 pt-2 border-t border-primary/10">
-                  <span className="text-primary font-bold">{Math.round(day.high)}°</span>
-                  <span className="text-muted-foreground/60">{Math.round(day.low)}°</span>
+                {/* 최고/최저 폰트 강화 */}
+                <div className="flex flex-col gap-1.5 mt-3 pt-2 border-t border-primary/10">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[10px] text-red-500 font-extrabold bg-red-500/10 px-1 rounded">최고</span>
+                    <span className="tech-text text-blue-300 font-bold text-sm">{Math.round(day.high)}°</span>
+                  </div>
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[10px] text-blue-500 font-extrabold bg-blue-500/10 px-1 rounded">최저</span>
+                    <span className="tech-text text-muted-foreground/80 font-bold text-sm">{Math.round(day.low)}°</span>
+                  </div>
                 </div>
               </Card>
             ))}

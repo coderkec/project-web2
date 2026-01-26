@@ -27,6 +27,7 @@ export type SessionPayload = {
 // Safe URL utility to prevent "Invalid URL" crash
 function safeUrl(base: string, path: string = ""): string {
   try {
+    if (!base) return path;
     return new URL(path, base).toString();
   } catch (e) {
     console.error(`[SDK] Invalid URL components: base=${base}, path=${path}`);
@@ -42,23 +43,23 @@ class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
     console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
     if (!ENV.oAuthServerUrl) {
-      console.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
+      console.warn(
+        "[OAuth] WARNING: OAUTH_SERVER_URL is not configured! Defaulting to manus.run for exchange."
       );
     }
   }
 
   private decodeState(state: string): string {
     try {
-      console.log("[OAuth] Attempting to decode state:", state);
-      // Normalized state (handle URL-safe Base64 and padding)
+      console.log("[OAuth] decodeState INPUT:", state);
+      if (!state) return "";
+      // Handle URL-safe base64 and standard base64
       const normalizedState = state.replace(/-/g, '+').replace(/_/g, '/');
       const decoded = Buffer.from(normalizedState, 'base64').toString('utf8').trim();
-
-      console.log("[OAuth] Successfully decoded redirectUri:", decoded);
+      console.log("[OAuth] decodeState OUTPUT:", decoded);
       return decoded;
     } catch (e) {
-      console.error("[OAuth] CRITICAL: Failed to decode state base64:", state, e);
+      console.error("[OAuth] decodeState FAILED:", state, e);
       return "";
     }
   }
@@ -75,14 +76,23 @@ class OAuthService {
       redirectUri,
     };
 
-    console.log("[OAuth] Requesting token with redirectUri:", redirectUri);
+    console.log("[OAuth] Requesting token from Portal:", {
+      baseURL: this.client.defaults.baseURL,
+      path: EXCHANGE_TOKEN_PATH,
+      redirectUri,
+      codeSnippet: code.substring(0, 5) + "..."
+    });
 
-    const { data } = await this.client.post<ExchangeTokenResponse>(
-      EXCHANGE_TOKEN_PATH,
-      payload
-    );
-
-    return data;
+    try {
+      const { data } = await this.client.post<ExchangeTokenResponse>(
+        EXCHANGE_TOKEN_PATH,
+        payload
+      );
+      return data;
+    } catch (err: any) {
+      console.error("[OAuth] getTokenByCode failed:", err.response?.data || err.message);
+      throw err;
+    }
   }
 
   async getUserInfoByToken(
@@ -101,7 +111,7 @@ class OAuthService {
 
 const createOAuthHttpClient = (): AxiosInstance =>
   axios.create({
-    baseURL: ENV.oAuthServerUrl,
+    baseURL: ENV.oAuthServerUrl || "https://oauth.manus.run",
     timeout: AXIOS_TIMEOUT_MS,
   });
 
@@ -140,8 +150,25 @@ class SDKServer {
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
+    console.log("[SDK] exchangeCodeForToken START:", { codeSnippet: code.substring(0, 5), state });
+
     if (ENV.appId.includes(".apps.googleusercontent.com")) {
-      const redirectUri = Buffer.from(state.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8').trim();
+      console.log("[SDK] Detected Google OAuth flow");
+      let redirectUri = "";
+      try {
+        const normalizedState = state.replace(/-/g, '+').replace(/_/g, '/');
+        redirectUri = Buffer.from(normalizedState, 'base64').toString('utf8').trim();
+        console.log("[SDK] Decoded Google redirectUri:", redirectUri);
+      } catch (e) {
+        console.error("[SDK] Failed to decode Google state:", state, e);
+        throw new Error("Invalid URL (State decoding failed)");
+      }
+
+      if (!redirectUri || !redirectUri.startsWith("http")) {
+        console.error("[SDK] Decoded redirectUri is NOT a valid URL:", redirectUri);
+        throw new Error("Invalid URL (State is not a valid URL)");
+      }
+
       const decodedCode = code.includes("%") ? decodeURIComponent(code) : code;
 
       const params = new URLSearchParams();
@@ -151,10 +178,9 @@ class SDKServer {
       params.append("redirect_uri", redirectUri);
       params.append("grant_type", "authorization_code");
 
-      console.log("[SDK] Requesting Google token with decoded redirectUri:", redirectUri);
-
       try {
         const authHeader = `Basic ${Buffer.from(`${ENV.appId}:${ENV.googleClientSecret}`).toString("base64")}`;
+        console.log("[SDK] POSTing to Google Token Endpoint with redirect_uri:", redirectUri);
 
         const { data } = await axios.post("https://oauth2.googleapis.com/token", params.toString(), {
           headers: {
@@ -162,6 +188,8 @@ class SDKServer {
             "Authorization": authHeader
           },
         });
+
+        console.log("[SDK] Google Token SUCCESS");
         return {
           accessToken: data.access_token,
           tokenType: data.token_type,
@@ -171,8 +199,10 @@ class SDKServer {
         };
       } catch (error: any) {
         if (error.response) {
-          console.error("[SDK] Google Token Error Details:", error.response.data);
+          console.error("[SDK] Google Token ERROR Response:", error.response.data);
+          throw new Error(`OAuth callback failed: ${error.response.data.error_description || error.response.data.error || "Google rejection"}`);
         }
+        console.error("[SDK] Google Token ERROR Message:", error.message);
         throw error;
       }
     }
@@ -258,7 +288,6 @@ class SDKServer {
     cookieValue: string | undefined | null
   ): Promise<{ openId: string; appId: string; name: string } | null> {
     if (!cookieValue) {
-      console.warn("[Auth] Missing session cookie");
       return null;
     }
 
@@ -274,7 +303,6 @@ class SDKServer {
         !isNonEmptyString(appId) ||
         !isNonEmptyString(name)
       ) {
-        console.warn("[Auth] Session payload missing required fields");
         return null;
       }
 
@@ -284,7 +312,6 @@ class SDKServer {
         name,
       };
     } catch (error) {
-      console.warn("[Auth] Session verification failed", String(error));
       return null;
     }
   }
@@ -338,7 +365,6 @@ class SDKServer {
         });
         user = await db.getUserByOpenId(userInfo.openId);
       } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
         throw ForbiddenError("Failed to sync user info");
       }
     }

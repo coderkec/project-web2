@@ -15,7 +15,7 @@ export const getLoginUrl = () => {
 
   // If using standard Google OAuth directly
   if (appId && appId.includes(".apps.googleusercontent.com")) {
-    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    const url = new URL("http://accounts.google.com/o/oauth2/v2/auth");
     url.searchParams.set("client_id", appId);
     url.searchParams.set("redirect_uri", redirectUri);
     url.searchParams.set("response_type", "code");

@@ -20,19 +20,6 @@ export interface WeatherData {
   weeklyForecast?: Array<{ day: string; icon: string; condition: string; high: number; low: number }>;
 }
 
-export interface LogisticsData {
-  trackingNumber: string;
-  status: string;
-  origin: string;
-  destination: string;
-  carrier?: string;
-  estimatedDelivery?: Date;
-  actualDelivery?: Date;
-  weight?: number;
-  distance?: number;
-  cost?: number;
-  notes?: string;
-}
 
 export interface EnergyData {
   facility: string;
@@ -138,12 +125,7 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       visibility: 10000,
       pressure: 1013,
       precipitation: 0,
-      hourlyData: [
-        { time: "00:00", temp: 12, feelsLike: 10, humidity: 70 },
-        { time: "06:00", temp: 10, feelsLike: 8, humidity: 75 },
-        { time: "12:00", temp: 15, feelsLike: 13, humidity: 65 },
-        { time: "18:00", temp: 14, feelsLike: 12, humidity: 68 },
-      ],
+      hourlyData: hourlyData, // 24시간 데이터 사용
       weeklyForecast: [
         { day: "월", icon: "☀️", condition: "맑음", high: 16, low: 10 },
         { day: "화", icon: "☁️", condition: "흐림", high: 14, low: 9 },
@@ -187,40 +169,6 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
   return sampleWeatherData[location] || sampleWeatherData["서울"];
 }
 
-/**
- * 물류 데이터 조회 (샘플 데이터)
- * 실제 환경: 쿠팡, CJ대한통운, 롯데택배 등의 API 호출
- */
-export async function getLogisticsData(trackingNumber: string): Promise<LogisticsData> {
-  const sampleLogisticsData: Record<string, LogisticsData> = {
-    "CJ123456789": {
-      trackingNumber: "CJ123456789",
-      status: "배송중",
-      origin: "서울 강남구",
-      destination: "부산 해운대구",
-      carrier: "CJ대한통운",
-      estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      weight: 2500,
-      distance: 450,
-      cost: 5000,
-      notes: "안전 배송 중입니다",
-    },
-    "LOTTE987654321": {
-      trackingNumber: "LOTTE987654321",
-      status: "배송완료",
-      origin: "인천 남동구",
-      destination: "서울 마포구",
-      carrier: "롯데택배",
-      actualDelivery: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      weight: 1800,
-      distance: 30,
-      cost: 3000,
-      notes: "배송이 완료되었습니다",
-    },
-  };
-
-  return sampleLogisticsData[trackingNumber] || sampleLogisticsData["CJ123456789"];
-}
 
 import { fetchRealtimeEnergy, fetchKpxRealtimePower, fetchKepcoMonthlyPower, fetchGasYearlyUsage } from "./apiClient";
 
@@ -242,20 +190,38 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
 
     if (kpx && kpx.ok) {
       const kpxData = kpx.data;
-      const kepcoData = kepco?.data?.data?.[0]; // KEPCO 첫번째 항목
+      const kepcoData = kepco?.data?.data?.[0];
+
+      // 월별 통계 데이터 매핑 (API에서 12개월 데이터를 가져올 수 없으므로 우선 10~11월만 있는 경우 처리)
+      // 실제 구현 시에는 루프를 돌려 API 데이터를 채워넣어야 함
+      const monthlyStats = Array.from({ length: 12 }, (_, i) => ({
+        month: `${i + 1}월`,
+        electric: Math.round(800 + Math.random() * 400),
+        gas: Math.round(300 + Math.random() * 200),
+      }));
+
+      // KEPCO 데이터 반영 (예: 11월)
+      if (kepcoData) {
+        monthlyStats[10] = {
+          month: "11월",
+          electric: Math.round(parseFloat(kepcoData.powerUsage || "0")),
+          gas: monthlyStats[10].gas
+        };
+      }
 
       return {
         facility: facility + " 에너지 현황",
         energyType: "전기/가스",
-        consumption: kpxData.demand ?? 0,
+        consumption: Math.round(kpxData.demand ?? 0),
         cost: Math.round((kpxData.demand ?? 0) * 150),
         efficiency: 88,
         carbonEmission: Math.round((kpxData.demand ?? 0) * 0.42),
-        peakUsage: kpxData.supply ?? 0,
-        averageUsage: kepcoData?.powerUsage ? parseFloat(kepcoData.powerUsage) : (kpxData.demand ?? 0) * 0.8,
+        peakUsage: Math.round(kpxData.supply ?? 0),
+        averageUsage: Math.round(kepcoData?.powerUsage ? parseFloat(kepcoData.powerUsage) : (kpxData.demand ?? 0) * 0.8),
         trend: (kpxData.supply - kpxData.demand) > 5000 ? "안정" : "주의",
         notes: gas?.ok ? "도시가스 데이터 연동됨" : "실시간 전력 수급 중",
         recordDate: new Date(),
+        monthlyStats: monthlyStats,
       };
     }
   } catch (err) {
@@ -307,12 +273,6 @@ export async function getMultipleWeatherData(locations: string[]): Promise<Weath
   return Promise.all(locations.map((location) => getWeatherData(location)));
 }
 
-/**
- * 여러 배송 번호의 물류 데이터 조회
- */
-export async function getMultipleLogisticsData(trackingNumbers: string[]): Promise<LogisticsData[]> {
-  return Promise.all(trackingNumbers.map((trackingNumber) => getLogisticsData(trackingNumber)));
-}
 
 /**
  * 여러 시설의 에너지 데이터 조회

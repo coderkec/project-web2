@@ -45,8 +45,6 @@ export async function fetchCompanyNotices() {
     }
 }
 
-
-
 // [아이디어 3] 상세 대기질 - PC3 or Public API
 export async function fetchDetailedAirQuality(location: string) {
     try {
@@ -60,8 +58,8 @@ export async function fetchDetailedAirQuality(location: string) {
 // [Real] 기상청/에너지 컨테이너 연동
 // .env에 설정된 URL을 통해 Kubernetes 서비스(또는 NodePort)를 호출합니다.
 
-const WEATHER_BASE = process.env.WEATHER_BASE_URL || "http://10.2.2.101/api";
-const ENERGY_BASE = process.env.ENERGY_API_URL || "http://10.2.2.5:8000";
+const KMA_API_URL = process.env.KMA_API_URL || "http://10.2.2.5:3000";
+const ENERGY_BASE = process.env.ENERGY_API_URL || "http://10.2.2.5:30273";
 
 const LOC_TO_GRID: Record<string, { nx: number; ny: number; regIdLand: string; regIdTemp: string; metroCd: string }> = {
     "서울": { nx: 60, ny: 127, regIdLand: "11B00000", regIdTemp: "11B10101", metroCd: "11" },
@@ -75,10 +73,10 @@ export async function fetchWeatherFromKMA(location: string) {
         const grid = LOC_TO_GRID[location] || LOC_TO_GRID["서울"];
 
         const [ncst, short, midLand, midTemp] = await Promise.all([
-            axios.get(`${WEATHER_BASE}/weather`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
-            axios.get(`${WEATHER_BASE}/weather/short`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
-            axios.get(`${WEATHER_BASE}/weather/mid/land`, { params: { regId: grid.regIdLand } }).then(r => r.data),
-            axios.get(`${WEATHER_BASE}/weather/mid/temp`, { params: { regId: grid.regIdTemp } }).then(r => r.data)
+            axios.get(`${KMA_API_URL}/weather`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
+            axios.get(`${KMA_API_URL}/weather/short`, { params: { nx: grid.nx, ny: grid.ny } }).then(r => r.data),
+            axios.get(`${KMA_API_URL}/weather/mid/land`, { params: { regId: grid.regIdLand } }).then(r => r.data),
+            axios.get(`${KMA_API_URL}/weather/mid/temp`, { params: { regId: grid.regIdTemp } }).then(r => r.data)
         ]);
 
         return { location, ncst, short, midLand, midTemp };
@@ -120,15 +118,8 @@ export async function fetchGasYearlyUsage(year: string, sido: string) {
 }
 
 export async function fetchRealtimeEnergy(facilityId: string) {
-    const ENERGY_API_URL = process.env.ENERGY_API_URL;
-
-    if (!ENERGY_API_URL) {
-        console.warn("[API Client] ENERGY_API_URL not defined. Using mock/fallback.");
-        return null;
-    }
-
     try {
-        const response = await axios.get(`${ENERGY_API_URL}/energy/realtime/${facilityId}`);
+        const response = await axios.get(`${ENERGY_BASE}/energy/realtime/${facilityId}`);
         return response.data;
     } catch (error) {
         return handleApiError(error, "Energy API Container");

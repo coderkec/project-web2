@@ -95,7 +95,7 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
             <Leaf className="w-5 h-5" />
           </div>
           <p className="text-xs text-muted-foreground mb-1">탄소 배출량</p>
-          <p className="font-bold font-mono">{displayData.carbonEmission} kg</p>
+          <p className="font-bold font-mono">{displayData.carbonEmission !== undefined ? Math.round(displayData.carbonEmission) : "-"} kg</p>
         </div>
 
         <div className="p-2 border-l border-primary/10">
@@ -103,7 +103,7 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
             <TrendingDown className="w-5 h-5" />
           </div>
           <p className="text-xs text-muted-foreground mb-1">에너지 효율</p>
-          <p className="font-bold font-mono">{displayData.efficiency}% (우수)</p>
+          <p className="font-bold font-mono">{displayData.efficiency !== undefined ? Math.round(displayData.efficiency) : "-"}% (우수)</p>
         </div>
 
         <div className="p-2 border-l border-primary/10">
@@ -111,7 +111,7 @@ export function EnergyCard({ data, isLoading }: EnergyCardProps) {
             <Gauge className="w-5 h-5" />
           </div>
           <p className="text-xs text-muted-foreground mb-1">피크 부하</p>
-          <p className="font-bold font-mono">{displayData.peakUsage} kW</p>
+          <p className="font-bold font-mono">{displayData.peakUsage !== undefined ? Math.round(displayData.peakUsage) : "-"} kW</p>
         </div>
       </div>
 

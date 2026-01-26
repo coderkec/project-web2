@@ -66,8 +66,9 @@ export function WeatherCard({ data, isLoading, isError }: WeatherCardProps) {
   /* ===============================
      정상 데이터
   =============================== */
-  const tempDiff =
-    data.temperature - (data.yesterdayTemp ?? data.temperature);
+  const roundedTemp = Math.round(data.temperature);
+  const roundedYesterday = data.yesterdayTemp !== undefined ? Math.round(data.yesterdayTemp) : roundedTemp;
+  const tempDiff = roundedTemp - roundedYesterday;
 
   const diffText =
     tempDiff > 0
@@ -92,7 +93,7 @@ export function WeatherCard({ data, isLoading, isError }: WeatherCardProps) {
         <div>
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-bold tech-text">
-              {data.temperature}
+              {Math.round(data.temperature)}
             </span>
             <span className="text-lg text-muted-foreground">°C</span>
           </div>
@@ -123,15 +124,15 @@ export function WeatherCard({ data, isLoading, isError }: WeatherCardProps) {
         <div className="grid grid-cols-3 text-center text-xs divide-x divide-primary/10">
           <div className="px-2">
             <p className="text-muted-foreground mb-1">어제</p>
-            <p className="font-bold">{data.yesterdayTemp ?? "-"}</p>
+            <p className="font-bold">{data.yesterdayTemp !== undefined ? Math.round(data.yesterdayTemp) : "-"}</p>
           </div>
           <div className="px-2">
             <p className="text-primary font-bold mb-1">오늘</p>
-            <p className="font-bold">{data.temperature}°</p>
+            <p className="font-bold">{Math.round(data.temperature)}°</p>
           </div>
           <div className="px-2">
             <p className="text-muted-foreground mb-1">내일</p>
-            <p className="font-bold">{data.tomorrowTemp ?? "-"}</p>
+            <p className="font-bold">{data.tomorrowTemp !== undefined ? Math.round(data.tomorrowTemp) : "-"}</p>
           </div>
         </div>
       </div>

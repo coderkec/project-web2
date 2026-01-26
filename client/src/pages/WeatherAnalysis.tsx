@@ -168,15 +168,17 @@ export default function WeatherAnalysis() {
         {/* 주간 예보 */}
         <div>
           <h2 className="tech-text text-lg mb-4">7일 예보</h2>
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             {weeklyForecast.map((day, idx) => (
-              <Card key={idx} className="blueprint-card p-4 text-center">
-                <p className="font-bold text-sm mb-2">{day.day}</p>
-                <p className="text-2xl mb-2">{day.icon}</p>
-                <p className="text-xs text-muted-foreground mb-2">{day.condition}</p>
-                <div className="flex justify-center gap-2 text-xs">
-                  <span className="text-primary/80 font-bold">{day.high}°</span>
-                  <span className="text-muted-foreground">{day.low}°</span>
+              <Card key={idx} className="blueprint-card p-4 text-center hover:border-primary/40 transition-colors">
+                <p className="font-bold text-sm mb-3 border-b border-primary/10 pb-2">{day.day}</p>
+                <div className="py-2">
+                  <span className="text-4xl block mb-2">{day.icon}</span>
+                  <p className="text-xs text-muted-foreground font-medium">{day.condition}</p>
+                </div>
+                <div className="flex justify-center items-center gap-3 mt-3 pt-2 border-t border-primary/10">
+                  <span className="text-primary font-bold">{day.high}°</span>
+                  <span className="text-muted-foreground/60">{day.low}°</span>
                 </div>
               </Card>
             ))}

@@ -23,7 +23,11 @@ export default function Login() {
       await utils.auth.me.invalidate();
 
       localStorage.setItem("isLoggedIn", "true");
-      setLocation("/");
+
+      // ✅ 세션이 확실히 브라우저에 반영될 시간을 갖기 위해 약간의 지연 추가
+      setTimeout(() => {
+        setLocation("/");
+      }, 100);
     } catch (err: any) {
       setError(err.message || "아이디 또는 비밀번호가 틀렸습니다.");
     }

@@ -12,7 +12,7 @@ import {
   // logApiCall,
 } from "./db";
 import * as db from "./db";
-import { getWeatherData, getLogisticsData, getEnergyData } from "./services/dataService";
+import { getWeatherData, getEnergyData } from "./services/dataService";
 import { sdk } from "./_core/sdk";
 import { z } from "zod";
 
@@ -134,90 +134,6 @@ export const appRouter = router({
             userId: ctx.user.id,
             apiName: "weather",
             endpoint: "/api/weather/save",
-            method: "POST",
-            statusCode: 500,
-            responseTime: Date.now() - startTime,
-            success: 0,
-            errorMessage: error instanceof Error ? error.message : "Unknown error",
-          });
-          throw error;
-        }
-      }),
-  }),
-
-  // 물류 API 라우터
-  logistics: router({
-    list: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getLogisticsRecords(ctx.user.id, 10);
-    }),
-    fetch: protectedProcedure
-      .input(z.object({ trackingNumber: z.string() }))
-      .query(async ({ ctx, input }) => {
-        const startTime = Date.now();
-        try {
-          const data = await getLogisticsData(input.trackingNumber);
-          await db.logApiCall({
-            userId: ctx.user.id,
-            apiName: "logistics",
-            endpoint: "/api/logistics/fetch",
-            method: "GET",
-            statusCode: 200,
-            responseTime: Date.now() - startTime,
-            success: 1,
-          });
-          return data;
-        } catch (error) {
-          await db.logApiCall({
-            userId: ctx.user.id,
-            apiName: "logistics",
-            endpoint: "/api/logistics/fetch",
-            method: "GET",
-            statusCode: 500,
-            responseTime: Date.now() - startTime,
-            success: 0,
-            errorMessage: error instanceof Error ? error.message : "Unknown error",
-          });
-          throw error;
-        }
-      }),
-    save: protectedProcedure
-      .input(
-        z.object({
-          trackingNumber: z.string(),
-          status: z.string(),
-          origin: z.string(),
-          destination: z.string(),
-          carrier: z.string().optional(),
-          estimatedDelivery: z.date().optional(),
-          actualDelivery: z.date().optional(),
-          weight: z.number().optional(),
-          distance: z.number().optional(),
-          cost: z.number().optional(),
-          notes: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        const startTime = Date.now();
-        try {
-          await db.saveLogisticsRecord({
-            userId: ctx.user.id,
-            ...input,
-          });
-          await db.logApiCall({
-            userId: ctx.user.id,
-            apiName: "logistics",
-            endpoint: "/api/logistics/save",
-            method: "POST",
-            statusCode: 200,
-            responseTime: Date.now() - startTime,
-            success: 1,
-          });
-          return { success: true };
-        } catch (error) {
-          await db.logApiCall({
-            userId: ctx.user.id,
-            apiName: "logistics",
-            endpoint: "/api/logistics/save",
             method: "POST",
             statusCode: 500,
             responseTime: Date.now() - startTime,

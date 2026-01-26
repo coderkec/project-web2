@@ -21,19 +21,6 @@ export default function Home() {
   const weather = homeData?.weather;
   const energy = homeData?.energy;
 
-  /* ===============================
-     OAuth 토큰 처리 (기존 유지)
-  =============================== */
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (token) {
-      document.cookie = `app_session_id=${token}; path=/; max-age=31536000; SameSite=Lax`;
-      window.history.replaceState({}, "", "/");
-      window.location.reload();
-    }
-  }, []);
-
   const today = new Date();
   const dateString = today.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -45,7 +32,7 @@ export default function Home() {
   const stats = [
     {
       label: "현재 기온",
-      value: weather?.temperature?.toString() || "-",
+      value: weather?.temperature !== undefined ? Math.round(weather.temperature).toString() : "-",
       unit: "°C",
       trend: "up" as const,
       icon: <Cloud className="w-5 h-5" />,
@@ -53,7 +40,7 @@ export default function Home() {
     },
     {
       label: "습도",
-      value: weather?.humidity?.toString() || "-",
+      value: weather?.humidity !== undefined ? Math.round(weather.humidity).toString() : "-",
       unit: "%",
       trend: "stable" as const,
       icon: <Wind className="w-5 h-5" />,
@@ -61,7 +48,7 @@ export default function Home() {
     },
     {
       label: "실시간 전력 사용",
-      value: energy?.consumption?.toString() || "-",
+      value: energy?.consumption !== undefined ? Math.round(energy.consumption).toString() : "-",
       unit: "kWh",
       trend: "down" as const,
       icon: <Zap className="w-5 h-5" />,
@@ -69,7 +56,7 @@ export default function Home() {
     },
     {
       label: "에너지 효율",
-      value: energy?.efficiency?.toString() || "-",
+      value: energy?.efficiency !== undefined ? Math.round(energy.efficiency).toString() : "-",
       unit: "%",
       trend: "up" as const,
       icon: <Calendar className="w-5 h-5" />,

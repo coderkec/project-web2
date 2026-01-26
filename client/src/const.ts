@@ -7,9 +7,7 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL || "";
   const appId = import.meta.env.VITE_APP_ID || "";
-  // Hardcode the production origin to the VM IP to avoid redirect_uri_mismatch with nip.io or other domains
-  const origin = window.location.hostname === "localhost" ? window.location.origin : "http://172.16.6.61";
-  const redirectUri = `${origin}/api/oauth/callback`;
+  const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
 
   console.log("[Auth] appId:", appId);

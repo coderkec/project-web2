@@ -24,6 +24,16 @@ export type SessionPayload = {
   name: string;
 };
 
+// Safe URL utility to prevent "Invalid URL" crash
+function safeUrl(base: string, path: string = ""): string {
+  try {
+    return new URL(path, base).toString();
+  } catch (e) {
+    console.error(`[SDK] Invalid URL components: base=${base}, path=${path}`);
+    return base + path; // Fallback to simple concatenation
+  }
+}
+
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
 const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
 const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt`;
@@ -40,7 +50,6 @@ class OAuthService {
 
   private decodeState(state: string): string {
     try {
-      // Use Buffer for safer base64 decoding in Node.js
       const decoded = Buffer.from(state, 'base64').toString('utf8');
       console.log("[OAuth] Decoded redirectUri from state:", decoded);
       return decoded;
@@ -123,18 +132,12 @@ class SDKServer {
     return first ? first.toLowerCase() : null;
   }
 
-  /**
-   * Exchange OAuth authorization code for access token
-   * @example
-   * const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-   */
   async exchangeCodeForToken(
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
     if (ENV.appId.includes(".apps.googleusercontent.com")) {
       const redirectUri = Buffer.from(state, 'base64').toString('utf8');
-      // Ensure the code is decoded if it was double-encoded
       const decodedCode = code.includes("%") ? decodeURIComponent(code) : code;
 
       const params = new URLSearchParams();
@@ -147,7 +150,6 @@ class SDKServer {
       console.log("[SDK] Requesting Google token with decoded redirectUri:", redirectUri);
 
       try {
-        // Send credentials in both body and Authorization header for compatibility
         const authHeader = `Basic ${Buffer.from(`${ENV.appId}:${ENV.googleClientSecret}`).toString("base64")}`;
 
         const { data } = await axios.post("https://oauth2.googleapis.com/token", params.toString(), {
@@ -166,7 +168,6 @@ class SDKServer {
       } catch (error: any) {
         if (error.response) {
           console.error("[SDK] Google Token Error Details:", error.response.data);
-          console.error("[SDK] Google Token Error Status:", error.response.status);
         }
         throw error;
       }
@@ -174,11 +175,6 @@ class SDKServer {
     return this.oauthService.getTokenByCode(code, state);
   }
 
-  /**
-   * Get user information using access token
-   * @example
-   * const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
-   */
   async getUserInfo(accessToken: string): Promise<GetUserInfoResponse> {
     if (ENV.appId.includes(".apps.googleusercontent.com")) {
       const { data } = await axios.get("https://openidconnect.googleapis.com/v1/userinfo", {
@@ -221,11 +217,6 @@ class SDKServer {
     return new TextEncoder().encode(secret);
   }
 
-  /**
-   * Create a session token for a Manus user openId
-   * @example
-   * const sessionToken = await sdk.createSessionToken(userInfo.openId);
-   */
   async createSessionToken(
     openId: string,
     options: { expiresInMs?: number; name?: string } = {}
@@ -319,38 +310,18 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Extensive Debugging for OAuth Cookie Issues
-    console.log(`[Auth] Authenticating request: ${req.method} ${req.url}`);
-
-    const cookieHeader = req.headers.cookie;
-    console.log("[Auth] Raw Cookie Header:", cookieHeader ? "PRESENT" : "MISSING");
-    if (cookieHeader) {
-      console.log("[Auth] Cookie Header Content:", cookieHeader);
-    }
-
-    // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
-
-    console.log(`[Auth] Parsed '${COOKIE_NAME}':`, sessionCookie ? "FOUND" : "NOT_FOUND");
-    if (sessionCookie) {
-      console.log(`[Auth] Session Cookie Value (first 10 chars): ${sessionCookie.substring(0, 10)}...`);
-    }
-
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {
-      console.warn("[Auth] Session verification failed. Cookie was invalid or missing.");
       throw ForbiddenError("Invalid session cookie");
     }
-
-    console.log("[Auth] Session Verified. User OpenID:", session.openId);
 
     const sessionUserId = session.openId;
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
-    // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");

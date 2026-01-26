@@ -50,13 +50,13 @@ export default function WeatherAnalysis() {
 
   // 현재 상세 정보 구성
   const currentDetails = [
-    { label: "온도", value: `${weather.temperature}°C`, icon: Cloud, color: "text-primary/60" },
-    { label: "체감 온도", value: `${weather.feelsLike ?? weather.temperature}°C`, icon: Cloud, color: "text-primary/60" },
+    { label: "온도", value: `${weather.temperature ? Math.round(weather.temperature) : 0}°C`, icon: Cloud, color: "text-primary/60" },
+    { label: "체감 온도", value: `${weather.feelsLike ? Math.round(weather.feelsLike) : Math.round(weather.temperature)}°C`, icon: Cloud, color: "text-primary/60" },
     { label: "습도", value: `${weather.humidity}%`, icon: Droplets, color: "text-primary/60" },
     { label: "풍속", value: `${weather.windSpeed} km/h`, icon: Wind, color: "text-primary/60" },
-    { label: "시정", value: `${weather.visibility ?? 10000} m`, icon: Eye, color: "text-primary/60" },
-    { label: "기압", value: `${weather.pressure ?? 1013} hPa`, icon: Gauge, color: "text-primary/60" },
-    { label: "자외선", value: `${weather.uvIndex ?? 0}`, icon: Sun, color: "text-primary/60" },
+    { label: "시정", value: `${weather.visibility ?? 15000} m`, icon: Eye, color: "text-primary/60" },
+    { label: "기압", value: `${weather.pressure ?? 1020} hPa`, icon: Gauge, color: "text-primary/60" },
+    { label: "자외선", value: `${weather.uvIndex ?? 2}`, icon: Sun, color: "text-primary/60" },
     { label: "강수량", value: `${weather.precipitation ?? 0} mm`, icon: CloudRain, color: "text-primary/60" },
     { label: "상태", value: weather.condition, icon: Wind, color: "text-primary/60" },
   ];
@@ -110,7 +110,12 @@ export default function WeatherAnalysis() {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={temperatureData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="time" stroke="#ffffff60" style={{ fontSize: "12px" }} />
+                <XAxis
+                  dataKey="time"
+                  stroke="#ffffff60"
+                  style={{ fontSize: "10px" }}
+                  interval={2} // 라벨 겹침 방지
+                />
                 <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
                 <Tooltip
                   contentStyle={{
@@ -149,7 +154,12 @@ export default function WeatherAnalysis() {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={humidityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="time" stroke="#ffffff60" style={{ fontSize: "12px" }} />
+                <XAxis
+                  dataKey="time"
+                  stroke="#ffffff60"
+                  style={{ fontSize: "10px" }}
+                  interval={2}
+                />
                 <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
                 <Tooltip
                   contentStyle={{
@@ -169,16 +179,16 @@ export default function WeatherAnalysis() {
         <div>
           <h2 className="tech-text text-lg mb-4">7일 예보</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-            {weeklyForecast.map((day, idx) => (
+            {weeklyForecast.slice(0, 7).map((day, idx) => (
               <Card key={idx} className="blueprint-card p-4 text-center hover:border-primary/40 transition-colors">
-                <p className="font-bold text-sm mb-3 border-b border-primary/10 pb-2">{day.day}</p>
+                <p className="font-bold text-sm mb-3 border-b border-primary/10 pb-2">{day.day}요일</p>
                 <div className="py-2">
                   <span className="text-4xl block mb-2">{day.icon}</span>
                   <p className="text-xs text-muted-foreground font-medium">{day.condition}</p>
                 </div>
                 <div className="flex justify-center items-center gap-3 mt-3 pt-2 border-t border-primary/10">
-                  <span className="text-primary font-bold">{day.high}°</span>
-                  <span className="text-muted-foreground/60">{day.low}°</span>
+                  <span className="text-primary font-bold">{Math.round(day.high)}°</span>
+                  <span className="text-muted-foreground/60">{Math.round(day.low)}°</span>
                 </div>
               </Card>
             ))}
@@ -186,18 +196,17 @@ export default function WeatherAnalysis() {
         </div>
 
         {/* 통계 요약 */}
-        {/* 통계 요약 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="blueprint-card p-6">
             <h3 className="tech-text text-sm mb-3">오늘 통계</h3>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">최고 온도</span>
-                <span className="font-bold">{weeklyForecast[0]?.high ?? weather.temperature}°C</span>
+                <span className="font-bold">{Math.round(weeklyForecast[0]?.high ?? weather.temperature)}°C</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">최저 온도</span>
-                <span className="font-bold">{weeklyForecast[0]?.low ?? weather.temperature - 5}°C</span>
+                <span className="font-bold">{Math.round(weeklyForecast[0]?.low ?? weather.temperature - 5)}°C</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">현재 습도</span>
@@ -218,16 +227,16 @@ export default function WeatherAnalysis() {
                 <span className="font-bold">
                   {weeklyForecast.length > 0
                     ? (weeklyForecast.reduce((acc, curr) => acc + (curr.high + curr.low) / 2, 0) / weeklyForecast.length).toFixed(1)
-                    : weather.temperature}°C
+                    : Math.round(weather.temperature)}°C
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">주간 최고</span>
-                <span className="font-bold">{Math.max(...weeklyForecast.map(d => d.high), weather.temperature)}°C</span>
+                <span className="font-bold">{Math.round(Math.max(...weeklyForecast.map(d => d.high), weather.temperature))}°C</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">주간 최저</span>
-                <span className="font-bold">{Math.min(...weeklyForecast.map(d => d.low), weather.temperature - 5)}°C</span>
+                <span className="font-bold">{Math.round(Math.min(...weeklyForecast.map(d => d.low), weather.temperature - 5))}°C</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">예보 기간</span>
@@ -253,7 +262,7 @@ export default function WeatherAnalysis() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">체감 온도</span>
-                <span className="font-bold">{weather.feelsLike ?? weather.temperature}°C</span>
+                <span className="font-bold">{Math.round(weather.feelsLike ?? weather.temperature)}°C</span>
               </div>
             </div>
           </Card>

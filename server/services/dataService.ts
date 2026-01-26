@@ -157,6 +157,7 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
   return {
     location: location + ", 대한민국",
     temperature: baseTemp,
+    feelsLike: baseTemp - 2,
     humidity: 55,
     windSpeed: 3.2,
     condition: "맑음",

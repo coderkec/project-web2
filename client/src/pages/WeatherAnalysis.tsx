@@ -94,7 +94,7 @@ export default function WeatherAnalysis() {
     { label: "온도", value: `${Math.round(weather.temperature)}°C`, icon: Cloud },
     {
       label: "체감 온도",
-      value: `${Math.round(weather.feelsLike)}°C`,
+      value: `${Math.round(weather.feelsLike ?? weather.temperature)}°C`,
       icon: Cloud,
     },
     { label: "습도", value: `${weather.humidity}%`, icon: Droplets },

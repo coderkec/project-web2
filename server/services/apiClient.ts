@@ -98,7 +98,9 @@ export async function fetchWeatherFromKMA(location: string) {
 // 에너지 API 전용 클라이언트 함수들
 export async function fetchKpxRealtimePower() {
     try {
-        const response = await axios.get(`${ENERGY_BASE}/kpx/now`);
+        const response = await axios.get(`${ENERGY_BASE}/kpx/now`, {
+            params: { page: 1, perPage: 100 }
+        });
         return response.data;
     } catch (error) {
         return handleApiError(error, "Energy API (KPX Now)");

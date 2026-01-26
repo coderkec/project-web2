@@ -217,33 +217,39 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
     });
 
     if (kpx && kpx.ok) {
-      const kpxData = kpx.data;
+      const kpxDataList = kpx.data || [];
       const kepcoData = kepco?.data?.data?.[0];
 
-      if (kepcoData) {
-        monthlyStats[10] = {
-          month: "11월",
-          electric: Math.round(parseFloat(kepcoData.powerUsage || "0")),
-          gas: monthlyStats[10].gas
+      // 1. 최신 연도 데이터 찾기 (연도 내림차순 정렬)
+      const latestData = kpxDataList.sort((a: any, b: any) =>
+        Number(b["연도"] || 0) - Number(a["연도"] || 0)
+      )[0];
+
+      // 2. 해당 지역(facility)의 데이터 추출 (쉼표 제거 후 숫자 변환)
+      // API 응답의 키가 한글("서울", "부산" 등)로 되어 있음
+      const rawValue = latestData ? latestData[facility] : "0";
+      const consValue = parseFloat((rawValue || "0").toString().replace(/,/g, ""));
+
+      console.log(`[Energy API] Parsed ${facility}: raw="${rawValue}" -> val=${consValue} (Year: ${latestData?.["연도"]})`);
+
+      // 3. 값이 유효하면 리얼 데이터로 반환
+      if (consValue > 0) {
+        return {
+          facility: facility + " 에너지 현황",
+          energyType: "전기/가스",
+          consumption: consValue, // 연간 총 사용량
+          cost: Math.round(consValue * 150), // 단가 가정
+          efficiency: 88,
+          carbonEmission: Math.round(consValue * 0.424), // 탄소 배출 계수
+          peakUsage: Math.round(consValue / 8760 * 1.5), // (연간/8760시간) * 피크계수
+          averageUsage: Math.round(consValue / 12), // 월 평균
+          trend: "안정",
+          notes: `최신 데이터 기준 (${latestData?.["연도"] || "N/A"})`,
+          recordDate: new Date(),
+          monthlyStats: monthlyStats,
+          isRealData: true
         };
       }
-
-      console.log(`[Energy API] Success reaching production containers for ${facility}`);
-      return {
-        facility: facility + " 에너지 현황",
-        energyType: "전기/가스",
-        consumption: Math.round(kpxData.demand ?? 1540),
-        cost: Math.round((kpxData.demand ?? 1540) * 150),
-        efficiency: 88,
-        carbonEmission: Math.round((kpxData.demand ?? 1540) * 0.42),
-        peakUsage: Math.round(kpxData.supply ?? 1800),
-        averageUsage: Math.round(kepcoData?.powerUsage ? parseFloat(kepcoData.powerUsage) : 1200),
-        trend: "안정",
-        notes: gas?.ok ? "도시가스 연동됨" : "실시간 수급 중",
-        recordDate: new Date(),
-        monthlyStats: monthlyStats,
-        isRealData: true
-      };
     }
   } catch (err) {
     console.warn("[DataService] Energy API error, falling back to mock.");

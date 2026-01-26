@@ -91,17 +91,17 @@ export default function WeatherAnalysis() {
      현재 상세 정보
   =============================== */
   const currentDetails = [
-    { label: "온도", value: `${Math.round(weather.temperature)}°C`, icon: Cloud },
+    { label: "온도", value: `${weather.temperature.toFixed(1)}°C`, icon: Cloud },
     {
       label: "체감 온도",
-      value: `${Math.round(weather.feelsLike ?? weather.temperature)}°C`,
+      value: `${(weather.feelsLike ?? weather.temperature).toFixed(1)}°C`,
       icon: Cloud,
     },
-    { label: "습도", value: `${weather.humidity}%`, icon: Droplets },
-    { label: "풍속", value: `${weather.windSpeed} m/s`, icon: Wind },
+    { label: "습도", value: `${weather.humidity.toFixed(1)}%`, icon: Droplets },
+    { label: "풍속", value: `${weather.windSpeed.toFixed(1)} m/s`, icon: Wind },
     {
       label: "시정",
-      value: `${weather.visibility ?? 15000} m`,
+      value: `${(weather.visibility ?? 15000).toLocaleString()} m`,
       icon: Eye,
     },
     {
@@ -109,10 +109,10 @@ export default function WeatherAnalysis() {
       value: `${weather.pressure ?? 1020} hPa`,
       icon: Gauge,
     },
-    { label: "자외선", value: `${weather.uvIndex ?? 2}`, icon: Sun },
+    { label: "자외선", value: `${(weather.uvIndex ?? 2).toFixed(1)}`, icon: Sun },
     {
       label: "강수량",
-      value: `${weather.precipitation ?? 0} mm`,
+      value: `${(weather.precipitation ?? 0).toFixed(1)} mm`,
       icon: CloudRain,
     },
   ];
@@ -289,10 +289,10 @@ export default function WeatherAnalysis() {
                 </p>
                 <div className="mt-3 flex justify-between text-xs">
                   <span className="text-red-400">
-                    최고 {Math.round(day.high)}°
+                    최고 {Number(day.high).toFixed(1)}°
                   </span>
                   <span className="text-blue-300">
-                    최저 {Math.round(day.low)}°
+                    최저 {Number(day.low).toFixed(1)}°
                   </span>
                 </div>
               </Card>

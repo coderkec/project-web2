@@ -137,7 +137,7 @@ class SDKServer {
       params.append("redirect_uri", redirectUri);
       params.append("grant_type", "authorization_code");
 
-      const { data } = await axios.post("http://oauth2.googleapis.com/token", params.toString(), {
+      const { data } = await axios.post("https://oauth2.googleapis.com/token", params.toString(), {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
 
@@ -156,7 +156,7 @@ class SDKServer {
 
   async getUserInfo(accessToken: string): Promise<GetUserInfoResponse> {
     if (this.isGoogleFlow()) {
-      const { data } = await axios.get("http://openidconnect.googleapis.com/v1/userinfo", {
+      const { data } = await axios.get("https://openidconnect.googleapis.com/v1/userinfo", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       return {

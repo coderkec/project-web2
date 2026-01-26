@@ -37,19 +37,19 @@ export default function WeatherAnalysis() {
     });
 
   /* ===============================
-     🔥 차트용 데이터 가공
+     🔥 차트용 데이터 가공 (정수)
   =============================== */
   const hourly = weather?.hourlyData || [];
 
   const temperatureData = hourly.map((h: any) => ({
     time: h.time ?? h.baseTime ?? "",
-    temp: Number(h.temp ?? h.ta ?? 0),
-    feelsLike: Number(h.feelsLike ?? h.taf ?? h.sens ?? 0),
+    temp: Math.round(h.temp ?? h.ta ?? 0),
+    feelsLike: Math.round(h.feelsLike ?? h.taf ?? h.sens ?? 0),
   }));
 
   const humidityData = hourly.map((h: any) => ({
     time: h.time ?? h.baseTime ?? "",
-    humidity: Number(h.humidity ?? h.reh ?? 0),
+    humidity: Math.round(h.humidity ?? h.reh ?? 0),
   }));
 
   const weeklyForecast = weather?.weeklyForecast || [];
@@ -88,17 +88,31 @@ export default function WeatherAnalysis() {
   }
 
   /* ===============================
-     현재 상세 정보
+     현재 상세 정보 (정수)
   =============================== */
   const currentDetails = [
-    { label: "온도", value: `${weather.temperature.toFixed(1)}°C`, icon: Cloud },
     {
-      label: "체감 온도",
-      value: `${(weather.feelsLike ?? weather.temperature).toFixed(1)}°C`,
+      label: "온도",
+      value: `${Math.round(weather.temperature)}°C`,
       icon: Cloud,
     },
-    { label: "습도", value: `${weather.humidity.toFixed(1)}%`, icon: Droplets },
-    { label: "풍속", value: `${weather.windSpeed.toFixed(1)} m/s`, icon: Wind },
+    {
+      label: "체감 온도",
+      value: `${Math.round(
+        weather.feelsLike ?? weather.temperature
+      )}°C`,
+      icon: Cloud,
+    },
+    {
+      label: "습도",
+      value: `${Math.round(weather.humidity)}%`,
+      icon: Droplets,
+    },
+    {
+      label: "풍속",
+      value: `${Math.round(weather.windSpeed)} m/s`,
+      icon: Wind,
+    },
     {
       label: "시정",
       value: `${(weather.visibility ?? 15000).toLocaleString()} m`,
@@ -106,13 +120,17 @@ export default function WeatherAnalysis() {
     },
     {
       label: "기압",
-      value: `${weather.pressure ?? 1020} hPa`,
+      value: `${Math.round(weather.pressure ?? 1020)} hPa`,
       icon: Gauge,
     },
-    { label: "자외선", value: `${(weather.uvIndex ?? 2).toFixed(1)}`, icon: Sun },
+    {
+      label: "자외선",
+      value: `${Math.round(weather.uvIndex ?? 2)}`,
+      icon: Sun,
+    },
     {
       label: "강수량",
-      value: `${(weather.precipitation ?? 0).toFixed(1)} mm`,
+      value: `${Math.round(weather.precipitation ?? 0)} mm`,
       icon: CloudRain,
     },
   ];
@@ -154,8 +172,12 @@ export default function WeatherAnalysis() {
                 <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5 text-primary/60" />
                   <div>
-                    <p className="text-xs text-muted-foreground">{d.label}</p>
-                    <p className="tech-text text-sm font-bold">{d.value}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {d.label}
+                    </p>
+                    <p className="tech-text text-sm font-bold">
+                      {d.value}
+                    </p>
                   </div>
                 </div>
               </Card>
@@ -163,9 +185,7 @@ export default function WeatherAnalysis() {
           })}
         </div>
 
-        {/* ===============================
-            온도 차트 (🔴 여기서 색상 수정)
-        =============================== */}
+        {/* 온도 차트 */}
         <Card className="blueprint-card p-6 overflow-x-auto">
           <h2 className="tech-text text-lg mb-4 flex items-center gap-2">
             <Cloud className="w-5 h-5 text-blue-400" />
@@ -177,27 +197,20 @@ export default function WeatherAnalysis() {
               <LineChart data={temperatureData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
 
-                {/* 🔥 X축 숫자 색 */}
                 <XAxis
                   dataKey="time"
                   tick={{ fill: "#0f172a", fontSize: 11, fontWeight: 700 }}
                   stroke="#94a3b8"
                 />
 
-                {/* 🔥 Y축 숫자 색 */}
                 <YAxis
-                  domain={["auto", "auto"]}
                   tick={{ fill: "#0f172a", fontSize: 11 }}
                   stroke="#94a3b8"
+                  tickFormatter={(v) => Math.round(v)}
                 />
 
-                {/* 🔥 Tooltip 색 */}
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    color: "#0f172a",
-                    border: "1px solid #cbd5f5",
-                  }}
+                  formatter={(v: number) => [`${Math.round(v)}°C`, ""]}
                 />
 
                 <Legend />
@@ -223,9 +236,7 @@ export default function WeatherAnalysis() {
           </div>
         </Card>
 
-        {/* ===============================
-            습도 차트 (🔴 여기서도 동일)
-        =============================== */}
+        {/* 습도 차트 */}
         <Card className="blueprint-card p-6 overflow-x-auto">
           <h2 className="tech-text text-lg mb-4 flex items-center gap-2">
             <Droplets className="w-5 h-5 text-cyan-400" />
@@ -246,14 +257,11 @@ export default function WeatherAnalysis() {
                   domain={[0, 100]}
                   tick={{ fill: "#0f172a", fontSize: 11 }}
                   stroke="#94a3b8"
+                  tickFormatter={(v) => Math.round(v)}
                 />
 
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    color: "#0f172a",
-                    border: "1px solid #cbd5f5",
-                  }}
+                  formatter={(v: number) => [`${Math.round(v)}%`, ""]}
                 />
 
                 <Bar
@@ -289,10 +297,10 @@ export default function WeatherAnalysis() {
                 </p>
                 <div className="mt-3 flex justify-between text-xs">
                   <span className="text-red-400">
-                    최고 {Number(day.high).toFixed(1)}°
+                    최고 {Math.round(day.high)}°
                   </span>
                   <span className="text-blue-300">
-                    최저 {Number(day.low).toFixed(1)}°
+                    최저 {Math.round(day.low)}°
                   </span>
                 </div>
               </Card>

@@ -7,7 +7,7 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL || "";
   const appId = import.meta.env.VITE_APP_ID || "";
-  const redirectUri = `${window.location.origin.replace("https:", "http:")}/api/auth/callback/google`;
+  const redirectUri = `${window.location.origin}/api/auth/callback/google`;
   const state = btoa(redirectUri);
 
   console.log("[Auth] appId:", appId);
@@ -15,7 +15,7 @@ export const getLoginUrl = () => {
 
   // If using standard Google OAuth directly
   if (appId && appId.includes(".apps.googleusercontent.com")) {
-    const url = new URL("http://accounts.google.com/o/oauth2/v2/auth");
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.searchParams.set("client_id", appId);
     url.searchParams.set("redirect_uri", redirectUri);
     url.searchParams.set("response_type", "code");

@@ -11,6 +11,7 @@ function getQueryParam(req: Request, key: string): string | undefined {
 
 export function registerOAuthRoutes(app: Express) {
   app.get("/api/auth/callback/google", async (req: Request, res: Response) => {
+    console.log("[OAuth] CALLBACK RECEIVED - Query Params:", req.query);
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
 

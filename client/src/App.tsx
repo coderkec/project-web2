@@ -82,7 +82,7 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="light" switchable={true}>
       <Router />
       <Toaster />
     </ThemeProvider>
@@ -90,3 +90,4 @@ function App() {
 }
 
 export default App;
+// Final Build 1.0.1

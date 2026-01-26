@@ -39,10 +39,12 @@ docker push ${REGISTRY}/${IMAGE_NAME}:latest
 
 echo "✅ 도커 이미지 푸시 완료"
 
-# 2.5 불필요한 이미지 정리 (용량 확보)
+# 2.5 불필요한 이미지 및 시스템 자원 정리 (용량 확보)
 echo ""
-echo "[Cleanup] 불필요한 이미지 정리 중 (dangling images)..."
-docker image prune -f
+echo "[Cleanup] 도커 시스템 및 빌드 캐시 정리 중..."
+# 사용하지 않는 모든 찌꺼기(이미지, 캐시, 네트워크 등) 일괄 삭제
+docker system prune -f
+docker builder prune -f
 
 # 3. 기존 파드 완전 삭제 (캐시 방지)
 echo ""

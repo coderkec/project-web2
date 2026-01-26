@@ -4,10 +4,22 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
 
 export default function WeatherAnalysis() {
   const [, setLocation] = useLocation();
   const locationName = "서울"; // 기본값
+
+  // 차트 렌더링 버그 수정용 (사용자 추천: requestAnimationFrame + resize event)
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setIsMounted(true);
+      setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 100);
+    });
+  }, []);
 
   const { data: weather, isLoading, error } = trpc.weather.fetch.useQuery({
     location: locationName
@@ -105,39 +117,57 @@ export default function WeatherAnalysis() {
 
         <div>
           <h2 className="tech-text text-lg mb-4">시간별 온도 변화 (24시간)</h2>
-          <Card className="blueprint-card p-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={temperatureData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="time" stroke="#ffffff60" style={{ fontSize: "10px" }} tick={{ fill: "#ffffff80" }} interval={1} />
-                <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
-                <Tooltip contentStyle={{ backgroundColor: "#0a1428", border: "1px solid #ffffff30" }} />
-                <Legend />
-                <Line type="monotone" dataKey="temp" stroke="#3b82f6" name="기온" strokeWidth={2} dot={{ fill: "#3b82f6", r: 4 }} />
-                <Line type="monotone" dataKey="feelsLike" stroke="#60a5fa" name="체감온도" strokeWidth={2} dot={{ fill: "#60a5fa", r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <Card className="blueprint-card p-6 min-h-[350px]">
+            <div className="h-[300px] w-full">
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={temperatureData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff15" />
+                    <XAxis
+                      dataKey="time"
+                      stroke="#ffffff80"
+                      style={{ fontSize: "11px", fontWeight: "bold" }}
+                      tick={{ fill: "white" }}
+                      interval={0}
+                      dy={5}
+                      height={40}
+                    />
+                    <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "#0a1428", border: "1px solid #ffffff30" }} />
+                    <Legend />
+                    <Line type="monotone" dataKey="temp" stroke="#3b82f6" name="기온" strokeWidth={2} dot={{ fill: "#3b82f6", r: 4 }} />
+                    <Line type="monotone" dataKey="feelsLike" stroke="#60a5fa" name="체감온도" strokeWidth={2} dot={{ fill: "#60a5fa", r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </Card>
         </div>
 
         <div>
           <h2 className="tech-text text-lg mb-4">시간별 습도 변화 (24시간)</h2>
-          <Card className="blueprint-card p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={humidityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis
-                  dataKey="time"
-                  stroke="#ffffff60"
-                  style={{ fontSize: "9px" }}
-                  tick={{ fill: "#ffffffcc" }}
-                  interval={0}
-                />
-                <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
-                <Tooltip contentStyle={{ backgroundColor: "#0a1428", border: "1px solid #ffffff30" }} />
-                <Bar dataKey="humidity" fill="#06b6d4" name="습도 (%)" />
-              </BarChart>
-            </ResponsiveContainer>
+          <Card className="blueprint-card p-6 min-h-[300px]">
+            <div className="h-[250px] w-full">
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={humidityData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff15" />
+                    <XAxis
+                      dataKey="time"
+                      stroke="#ffffff80"
+                      style={{ fontSize: "11px" }}
+                      tick={{ fill: "white", fontWeight: 900 }}
+                      interval={0}
+                      dy={10}
+                      height={50}
+                    />
+                    <YAxis stroke="#ffffff60" style={{ fontSize: "12px" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "#0a1428", border: "1px solid #ffffff30" }} />
+                    <Bar dataKey="humidity" fill="#06b6d4" name="습도 (%)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </Card>
         </div>
 
@@ -153,7 +183,6 @@ export default function WeatherAnalysis() {
                   <span className="text-4xl block mb-2 transition-transform hover:scale-110 duration-300">{day.icon}</span>
                   <p className="text-xs text-muted-foreground font-medium">{day.condition}</p>
                 </div>
-                {/* 최고/최저 폰트 강화 */}
                 <div className="flex flex-col gap-1.5 mt-3 pt-2 border-t border-primary/10">
                   <div className="flex justify-between items-center px-1">
                     <span className="text-[10px] text-red-500 font-extrabold bg-red-500/10 px-1 rounded">최고</span>
@@ -167,38 +196,6 @@ export default function WeatherAnalysis() {
               </Card>
             ))}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="blueprint-card p-6">
-            <h3 className="tech-text text-sm mb-3">오늘 통계</h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between"><span className="text-muted-foreground">최고 온도</span><span className="font-bold">{Math.round(weeklyForecast[0]?.high ?? weather.temperature)}°C</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">최저 온도</span><span className="font-bold">{Math.round(weeklyForecast[0]?.low ?? weather.temperature - 5)}°C</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">현재 습도</span><span className="font-bold">{weather.humidity}%</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">강수량</span><span className="font-bold">{weather.precipitation ?? 0} mm</span></div>
-            </div>
-          </Card>
-
-          <Card className="blueprint-card p-6">
-            <h3 className="tech-text text-sm mb-3">주간 통계</h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between"><span className="text-muted-foreground">평균 온도</span><span className="font-bold">{weeklyForecast.length > 0 ? (weeklyForecast.reduce((acc, curr) => acc + (curr.high + curr.low) / 2, 0) / weeklyForecast.length).toFixed(1) : Math.round(weather.temperature)}°C</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">주간 최고</span><span className="font-bold">{Math.round(Math.max(...weeklyForecast.map(d => d.high), weather.temperature))}°C</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">주간 최저</span><span className="font-bold">{Math.round(Math.min(...weeklyForecast.map(d => d.low), weather.temperature - 5))}°C</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">예보 기간</span><span className="font-bold">{weeklyForecast.length}일</span></div>
-            </div>
-          </Card>
-
-          <Card className="blueprint-card p-6">
-            <h3 className="tech-text text-sm mb-3">현재 상태 정보</h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between"><span className="text-muted-foreground">날씨 상태</span><span className="font-bold">{weather.condition}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">풍속</span><span className="font-bold">{weather.windSpeed} m/s</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">자외선 지수</span><span className="font-bold">{weather.uvIndex ?? "정보없음"}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">체감 온도</span><span className="font-bold">{Math.round(weather.feelsLike ?? weather.temperature)}°C</span></div>
-            </div>
-          </Card>
         </div>
       </div>
     </div>

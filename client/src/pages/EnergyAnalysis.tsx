@@ -42,6 +42,18 @@ export default function EnergyAnalysis() {
   const [, setLocation] = useLocation();
   const [region, setRegion] = useState<Region>("서울");
 
+  // 차트 렌더링 버그 수정 (ResponsiveContainer 초기 높이 0 문제 해결)
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    // 부모의 height 계산이 완료된 시점에 강제로 resize 이벤트를 발생시켜 차트를 그리라고 지시함
+    requestAnimationFrame(() => {
+      setIsMounted(true);
+      setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 50);
+    });
+  }, []);
+
   // 개별 카드 토글 상태
   const [toggledCards, setToggledCards] = useState<Record<number, boolean>>({});
 
@@ -77,12 +89,22 @@ export default function EnergyAnalysis() {
   }
 
   const monthlyEnergyData = energyData.monthlyStats || [];
+  const regionMultiplier: Record<string, number> = {
+    "서울": 1.0, "부산": 0.85, "대구": 0.78, "인천": 0.92, "광주": 0.72,
+    "대전": 0.75, "울산": 1.1, "경기": 1.25, "강원": 0.65, "충청": 0.8,
+    "전라": 0.7, "경상": 0.95, "제주": 0.6
+  };
+  const mult = regionMultiplier[region] || 1.0;
+
+  const adjustedConsumption = Math.round(energyData.consumption * mult);
+  const adjustedAvg = Number(((energyData.averageUsage || energyData.consumption / 30) * mult).toFixed(1));
+
   const dailyUsageData = [
-    { time: "00:00", usage: Math.round(energyData.consumption * 0.1) },
-    { time: "06:00", usage: Math.round(energyData.consumption * 0.15) },
-    { time: "12:00", usage: Math.round(energyData.consumption * 0.25) },
-    { time: "18:00", usage: Math.round(energyData.consumption * 0.3) },
-    { time: "24:00", usage: Math.round(energyData.consumption * 0.2) },
+    { time: "00:00", usage: Math.round(adjustedConsumption * 0.1) },
+    { time: "06:00", usage: Math.round(adjustedConsumption * 0.15) },
+    { time: "12:00", usage: Math.round(adjustedConsumption * 0.25) },
+    { time: "18:00", usage: Math.round(adjustedConsumption * 0.3) },
+    { time: "24:00", usage: Math.round(adjustedConsumption * 0.2) },
   ];
 
   return (
@@ -109,83 +131,97 @@ export default function EnergyAnalysis() {
                 </span>
               )}
             </div>
-            <p className="text-muted-foreground text-sm">
-              전국 지역 전력 · 가스 사용 현황
-            </p>
+            <p className="text-muted-foreground text-sm">전국 지역 전력 · 가스 사용 현황</p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 p-6 space-y-6">
-        {/* 지역 선택 */}
         <Card className="blueprint-card p-4">
           <div className="flex items-center gap-4 flex-wrap">
             <span className="text-xs text-muted-foreground">지역 선택</span>
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value as Region)}
-              className="bg-background border border-primary/30 px-3 py-1 text-sm outline-none focus:border-primary"
+              className="bg-background border border-primary/30 px-3 py-1 text-sm outline-none focus:border-primary rounded"
             >
               {["서울", "부산", "경기", "강원", "대구", "인천", "광주", "대전", "울산", "충청", "전라", "경상", "제주"].map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
+                <option key={r} value={r}>{r}</option>
               ))}
             </select>
-            <div className="ml-auto text-xs text-muted-foreground">
-              📍 현재 분석 지역: <b>{region}</b>
-            </div>
+            <div className="ml-auto text-xs text-muted-foreground">📍 현재 분석 지역: <b className="text-primary">{region}</b></div>
           </div>
         </Card>
 
-        {/* 시간별(일일) 전력 사용량 */}
+        {/* 시간별 전력 사용량 */}
         <div>
           <h2 className="tech-text text-lg mb-4">시간대별 전력 사용량</h2>
-          <Card className="blueprint-card p-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={dailyUsageData}>
-                <defs>
-                  <linearGradient id="dailyUsage" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="time" stroke="#ffffff60" tick={{ fill: "#ffffff90", fontSize: 10 }} />
-                <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff90", fontSize: 10 }} />
-                <Tooltip contentStyle={{ backgroundColor: "#0a1428", borderColor: "#ffffff20" }} itemStyle={{ color: "#3b82f6" }} />
-                <Area type="monotone" dataKey="usage" stroke="#3b82f6" fill="url(#dailyUsage)" name="전력 사용량 (kWh)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <Card className="blueprint-card p-6 min-h-[350px]">
+            <div className="h-[300px] w-full">
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dailyUsageData}>
+                    <defs>
+                      <linearGradient id="dailyUsage" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff15" />
+                    <XAxis
+                      dataKey="time"
+                      stroke="#ffffff80"
+                      tick={{ fill: "#ffffffcc", fontSize: 12, fontWeight: "bold" }}
+                      interval={0}
+                      dy={5}
+                      height={40}
+                    />
+                    <YAxis stroke="#ffffff80" tick={{ fill: "#ffffffaa", fontSize: 10 }} />
+                    <Tooltip contentStyle={{ backgroundColor: "#0a1428", borderColor: "#ffffff20" }} itemStyle={{ color: "#3b82f6" }} />
+                    <Area type="monotone" dataKey="usage" stroke="#3b82f6" fill="url(#dailyUsage)" name="전력 사용량 (kWh)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </Card>
         </div>
 
         {/* 월별 전력 / 가스 */}
         <div>
           <h2 className="tech-text text-lg mb-4">연간 에너지 사용 분석 (1월 - 12월)</h2>
-          <Card className="blueprint-card p-6">
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={monthlyEnergyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-                <XAxis dataKey="month" stroke="#ffffff60" tick={{ fill: "#ffffffcc", fontSize: 11, fontWeight: "bold" }} interval={0} />
-                <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 11 }} />
-                <Tooltip cursor={{ fill: '#ffffff05' }} contentStyle={{ backgroundColor: "#0a1428", borderColor: "#ffffff20", borderRadius: "4px" }} itemStyle={{ fontSize: '12px' }} />
-                <Legend verticalAlign="top" align="right" height={36} iconType="circle" formatter={(value) => <span className="text-xs text-muted-foreground ml-1">{value === 'electric' ? '전력 (kWh)' : '가스 (MJ)'}</span>} />
-                <Bar dataKey="electric" fill="#3b82f6" name="electric" radius={[2, 2, 0, 0]} barSize={20} />
-                <Bar dataKey="gas" fill="#f59e0b" name="gas" radius={[2, 2, 0, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
+          <Card className="blueprint-card p-6 min-h-[400px]">
+            <div className="h-[350px] w-full">
+              {isMounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyEnergyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis
+                      dataKey="month"
+                      stroke="#ffffff80"
+                      tick={{ fill: "white", fontSize: 13, fontWeight: 900 }}
+                      interval={0}
+                      dy={10}
+                      height={50}
+                    />
+                    <YAxis stroke="#ffffff60" tick={{ fill: "#ffffff80", fontSize: 11 }} />
+                    <Tooltip cursor={{ fill: '#ffffff05' }} contentStyle={{ backgroundColor: "#0a1428", borderColor: "#ffffff20", borderRadius: "4px" }} itemStyle={{ fontSize: '12px' }} />
+                    <Legend verticalAlign="top" align="right" height={36} iconType="circle" formatter={(value) => <span className="text-xs text-muted-foreground ml-1">{value === 'electric' ? '전력 (kWh)' : '가스 (MJ)'}</span>} />
+                    <Bar dataKey="electric" fill="#3b82f6" name="electric" radius={[2, 2, 0, 0]} barSize={20} />
+                    <Bar dataKey="gas" fill="#f59e0b" name="gas" radius={[2, 2, 0, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </Card>
         </div>
 
-        {/* 요약 (상호작용 카드) */}
+        {/* 요약 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Card Units / Values mapping */}
           {[
-            { label: "총 전력 사용량", flipLabel: "예상 누적 비용", unit: "kWh", flipUnit: "KRW", icon: Zap, flipIcon: DollarSign, color: "text-yellow-400", flipColor: "text-green-400", value: energyData.consumption, flipValue: (energyData.consumption * 185).toLocaleString() },
-            { label: "평균 일일 사용", flipLabel: "월간 예상 총량", unit: "kWh", flipUnit: "kWh", icon: Clock, flipIcon: BarChart3, color: "text-blue-400", flipColor: "text-indigo-400", value: (energyData.averageUsage ?? (energyData.consumption / 30)).toFixed(1), flipValue: Math.round(Number(energyData.averageUsage || energyData.consumption / 30) * 30).toLocaleString() },
-            { label: "피크 시간대", flipLabel: "에너지 효율 점수", icon: Clock, flipIcon: Activity, color: "text-purple-400", flipColor: "text-pink-400", value: (energyData.peakUsage ? "16:00" : "12:00"), flipValue: (energyData.efficiency || 88) + " pts" },
-            { label: "전월 대비 변동", flipLabel: "탄소 배출량 (CO₂)", icon: TrendingDown, flipIcon: Leaf, color: "text-green-400", flipColor: "text-emerald-400", value: (energyData.trend?.includes("하강") ? "-5%" : "+2%"), flipValue: (energyData.consumption * 0.424).toFixed(1) + " kg" }
+            { label: "총 전력 사용량", flipLabel: "예상 누적 비용", unit: "kWh", flipUnit: "KRW", icon: Zap, flipIcon: DollarSign, color: "text-yellow-400", flipColor: "text-green-400", value: adjustedConsumption, flipValue: (adjustedConsumption * 185).toLocaleString() },
+            { label: "평균 일일 사용", flipLabel: "월간 예상 총량", unit: "kWh", flipUnit: "kWh", icon: Clock, flipIcon: BarChart3, color: "text-blue-400", flipColor: "text-indigo-400", value: adjustedAvg, flipValue: Math.round(adjustedAvg * 30).toLocaleString() },
+            { label: "피크 시간대", flipLabel: "에너지 효율 점수", icon: Clock, flipIcon: Activity, color: "text-purple-400", flipColor: "text-pink-400", value: (energyData.peakUsage ? "16:00" : "12:00"), flipValue: (88 * mult).toFixed(0) + " pts" },
+            { label: "전월 대비 변동", flipLabel: "탄소 배출량 (CO₂)", icon: TrendingDown, flipIcon: Leaf, color: "text-green-400", flipColor: "text-emerald-400", value: (mult > 1 ? "+5%" : "-2%"), flipValue: (adjustedConsumption * 0.424).toFixed(1) + " kg" }
           ].map((item, idx) => {
             const isToggled = toggledCards[idx];
             const Icon = isToggled ? item.flipIcon : item.icon;
@@ -207,9 +243,7 @@ export default function EnergyAnalysis() {
                   </div>
                   <Icon className={`w-5 h-5 mt-2 opacity-60 ${isToggled ? item.flipColor : item.color}`} />
                 </div>
-                <div className="absolute bottom-1 right-2 text-[8px] text-muted-foreground/30 italic group-hover:text-primary transition-colors">
-                  Tap to flip
-                </div>
+                <div className="absolute bottom-1 right-2 text-[8px] text-muted-foreground/30 italic group-hover:text-primary transition-colors">Tap to flip</div>
               </Card>
             );
           })}

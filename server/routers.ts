@@ -55,7 +55,7 @@ export const appRouter = router({
           const cookieOptions = getSessionCookieOptions(ctx.req);
           ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
 
-          return { success: true, user };
+          return { success: true, user, sessionToken }; // ✅ 토큰도 함께 반환하여 프론트엔드에서 저장할 수 있게 함
         }
         throw new Error("Invalid credentials");
       }),

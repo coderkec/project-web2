@@ -61,6 +61,7 @@ export function useAuth(options?: UseAuthOptions) {
     setLoggedOut(true);
     utils.auth.me.setData(undefined, null);
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("app_session_token"); // ✅ 세션 토큰 제거
     localStorage.removeItem("manus-runtime-user-info");
 
     try {

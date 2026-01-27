@@ -17,7 +17,12 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       setError("");
-      await manualLogin.mutateAsync({ id, pw });
+      const result = await manualLogin.mutateAsync({ id, pw });
+
+      // ✅ 세션 토큰 저장 (헤더용)
+      if (result.sessionToken) {
+        localStorage.setItem("app_session_token", result.sessionToken);
+      }
 
       // ✅ 세션 쿠키가 발급되었으므로 meQuery 무효화
       await utils.auth.me.invalidate();

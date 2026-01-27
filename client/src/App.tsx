@@ -13,28 +13,10 @@ import RequireAuth from "./components/RequireAuth";
 import PageFade from "./components/PageFade";
 import { useEffect } from "react";
 
-function TokenHandler() {
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (token) {
-      // ✅ 닙이오(.nip.io) 및 로컬 환경 호환성을 위해 유연한 쿠키 옵션 사용
-      document.cookie = `app_session_id=${token}; path=/; max-age=31536000; SameSite=Lax`;
-
-      // ✅ 구글 로그인 성공 후 리다이렉트 시 RequireAuth가 쫓아내지 않도록 로컬 플래그 설정
-      localStorage.setItem("isLoggedIn", "true");
-
-      window.history.replaceState({}, "", "/");
-      window.location.reload();
-    }
-  }, []);
-  return null;
-}
 
 function Router() {
   return (
     <>
-      <TokenHandler />
       <Switch>
         {/* 로그인 */}
         <Route path="/login">

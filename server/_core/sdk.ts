@@ -174,10 +174,17 @@ class SDKServer {
 
   async authenticateRequest(req: Request): Promise<User> {
     const cookies = this.parseCookies(req.headers.cookie);
-    const sessionCookie = cookies.get(COOKIE_NAME);
-    const session = await this.verifySession(sessionCookie);
+    let sessionToken = cookies.get(COOKIE_NAME);
 
-    if (!session) throw ForbiddenError("Invalid session cookie");
+    // ✅ 쿠키가 없거나 유효하지 않을 경우를 대비해 헤더(Bearer Token)에서도 토큰을 찾습니다.
+    if (!sessionToken && req.headers.authorization?.startsWith("Bearer ")) {
+      sessionToken = req.headers.authorization.substring(7);
+      console.log("[SDK] Authenticating via Authorization Header");
+    }
+
+    const session = await this.verifySession(sessionToken);
+
+    if (!session) throw ForbiddenError("Invalid session sessionToken");
 
     let user = await db.getUserByOpenId(session.openId);
     if (!user) {

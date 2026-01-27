@@ -17,10 +17,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
     );
   }
 
-  // user가 없더라도 로컬 스토리지에 로그인 이력이 있거나, 
-  // URL에 인증 토큰(?token=)이 있으면 잠시 대기 (리다이렉트 방지)
-  const hasToken = new URLSearchParams(window.location.search).has("token");
-  if (!user && !isLoggedInLocal && !hasToken) {
+  if (!user && !isLoggedInLocal) {
     return <Redirect to="/login" />;
   }
 

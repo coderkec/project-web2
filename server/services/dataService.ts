@@ -216,9 +216,11 @@ export async function getEnergyData(facility: string): Promise<EnergyData> {
       };
     });
 
-    if (kpx && kpx.ok) {
-      const kpxDataList = kpx.data || [];
-      const kepcoData = kepco?.data?.data?.[0];
+    // KPX 응답에서 ok 필드가 없으므로 data 배열의 존재 여부로 확인합니다.
+    if (kpx && Array.isArray(kpx.data)) {
+      const kpxDataList = kpx.data;
+      // KEPCO나 GAS 응답에 에러 메시지(detail)가 있는지 확인
+      const kepcoData = (kepco && !kepco.detail) ? kepco.data?.data?.[0] : null;
 
       // 1. 최신 연도 데이터 찾기 (연도 내림차순 정렬)
       const latestData = kpxDataList.sort((a: any, b: any) =>

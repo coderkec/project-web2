@@ -9,7 +9,7 @@ echo "========================================="
 
 # 환경변수 확인
 GOOGLE_CLIENT_ID="116278425083-h8gi5c8u24gcoudtfbks9u8bkfknc1n7.apps.googleusercontent.com"
-REGISTRY="172.16.6.61:5000"
+REGISTRY="10.2.2.40:5000"
 IMAGE_NAME="library/integrated-dashboard"
 VERSION=$(date +%Y%m%d-%H%M%S)
 

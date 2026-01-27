@@ -73,7 +73,13 @@ export default function Login() {
             Please sign in to continue
           </p>
 
-          <div className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin();
+            }}
+          >
             <input
               className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               placeholder="ID"
@@ -94,13 +100,14 @@ export default function Login() {
             )}
 
             <button
-              onClick={handleLogin}
+              type="submit"
               className="w-full rounded-md bg-black py-2 text-sm font-medium text-white hover:bg-black/90"
             >
               Login Now
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 window.location.href = getLoginUrl();
               }}
@@ -114,7 +121,7 @@ export default function Login() {
               </svg>
               Login with Google
             </button>
-          </div>
+          </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             Forgot password?{" "}

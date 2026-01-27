@@ -18,7 +18,13 @@ function TokenHandler() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
-      document.cookie = `app_session_id=${token}; path=/; max-age=31536000; SameSite=Lax`;
+      const isSecure = window.location.protocol === "https:";
+      const cookieOptions = `path=/; max-age=31536000; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+      document.cookie = `app_session_id=${token}; ${cookieOptions}`;
+
+      // ✅ 구글 로그인 성공 후 리다이렉트 시 RequireAuth가 쫓아내지 않도록 플래그 설정
+      localStorage.setItem("isLoggedIn", "true");
+
       window.history.replaceState({}, "", "/");
       window.location.reload();
     }

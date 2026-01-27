@@ -5,11 +5,13 @@ import { EnergyCard } from "@/components/EnergyCard";
 import { DashboardStats } from "@/components/DashboardStats";
 import { Sidebar } from "@/components/Sidebar";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { fetchUltraWeather } from "@/services/weatherApi";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   // 통합 데이터 호출 (tRPC)
   const { data: homeData, isLoading: dataLoading } =
@@ -103,12 +105,20 @@ export default function Home() {
             </section>
 
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-4 h-full flex flex-col">
+              {/* 날씨 모니터링 카드 (클릭 시 이동) */}
+              <div
+                className="space-y-4 h-full flex flex-col cursor-pointer transition-transform hover:scale-[1.01]"
+                onClick={() => setLocation("/analysis/weather")}
+              >
                 <h3 className="tech-text text-lg">날씨 모니터링</h3>
                 <WeatherCard data={weather} isLoading={dataLoading} />
               </div>
 
-              <div className="space-y-4 h-full flex flex-col">
+              {/* 에너지 관리 카드 (클릭 시 이동) */}
+              <div
+                className="space-y-4 h-full flex flex-col cursor-pointer transition-transform hover:scale-[1.01]"
+                onClick={() => setLocation("/analysis/energy")}
+              >
                 <h3 className="tech-text text-lg">에너지 관리</h3>
                 <EnergyCard data={energy} isLoading={dataLoading} />
               </div>

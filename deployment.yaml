@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: dashboard
-        image: 10.2.2.40:5000/library/integrated-dashboard:latest
+        image: 172.16.6.61:5000/library/integrated-dashboard:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
